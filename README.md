@@ -3,7 +3,7 @@ Medical Concept Normalization
 
 Project utilize NN approaches to normalize medical concept.
 
-While working on project this techs is used:
+While working on project next techs are used:
 - DVC
 - MLFlow
 - Docker, Docker-compose
