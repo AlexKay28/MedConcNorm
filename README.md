@@ -13,7 +13,7 @@ While working on project next techs are used:
 
 <img src="https://www.mlflow.org/docs/latest/_static/MLflow-logo-final-black.png" width="250" height="100">
 
-<img src="https://quintagroup.com/cms/technology/Images/docker-compose-button.jpg" width="250" height="150">
+<img src="https://quintagroup.com/cms/technology/Images/docker-compose-button.jpg" width="250" height="120">
 
 
 Project Organization
