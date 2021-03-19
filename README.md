@@ -8,6 +8,12 @@ While working on project next techs are used:
 - MLFlow
 - Docker, Docker-compose
 
+
+<img src="https://repository-images.githubusercontent.com/83878269/a5c64400-8fdd-11ea-9851-ec57bc168db5" width="200" height="100">
+
+<img src="https://www.mlflow.org/docs/latest/_static/MLflow-logo-final-black.png" width="250" height="100">
+
+
 Project Organization
 ------------
 
