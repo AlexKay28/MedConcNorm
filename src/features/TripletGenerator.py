@@ -1,6 +1,11 @@
-import numpy as np
 import random
+import pandas as pd
+import numpy as np
+from scipy.spatial import distance
 
+
+N_RANDOM_OBS = 200
+N_POTENTIAL_EL = 30
 
 class TripletGenerator:
     
@@ -12,21 +17,39 @@ class TripletGenerator:
         y_label = y_labels_indices[y==label]
         idx = random.choice(y_label)
         return X[idx]
+    
+    def choose_neg(self, X, y, anchor_x, anchor_y):
+        """
+        choose the neg label with attention on the closest exaples
+        """
+        
+        X = X[y!=anchor_y]
+        y = y[y!=anchor_y]
+        indices = np.random.choice(X.shape[0], N_RANDOM_OBS)
+        X, y = X[indices], y[indices]
+        
+        y = np.array(y)
+        d = np.array([distance.euclidean(anchor_x, ex) for ex in X])
+        candidates = y[np.argpartition(d, N_POTENTIAL_EL)[:N_POTENTIAL_EL]]
+        
+        random_list = [random.random() for i in range(N_POTENTIAL_EL)]
+        s = sum(random_list)
+        random_list = [i/s for i in random_list ]
+        choose_probabilities = sorted(random_list)[::-1]
+        
+        neg_y = np.random.choice(candidates, 1, p=choose_probabilities)
+        return neg_y
 
     def get_triplet(self, X, y, n_classes=10):
         # choose random class
-        neg = anchor = random.choice(y)
+        anchor_y = random.choice(y)
+        anchor_x = self.get_observation(X, y, anchor_y)
+        pos_x    = self.get_observation(X, y, anchor_y)
         
-        # n - negative, should be different class
-        while neg == anchor:
-            # keep searching randomly
-            neg = random.choice(y)
-            
-        # p - positive class, will be example of the same class
-        anchor_get = self.get_observation(X, y, anchor)
-        pos_get    = self.get_observation(X, y, anchor)
-        neg_get    = self.get_observation(X, y, neg)
-        return anchor_get, pos_get, neg_get        
+        neg_y = self.choose_neg(X, y, anchor_x, anchor_y)
+        neg_x = self.get_observation(X, y, neg_y)
+        
+        return anchor_x, pos_x, neg_x        
     
     def generate_triplets(self, X, y, batch_size):
         while 1:
