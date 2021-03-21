@@ -23,15 +23,15 @@ def siamese_model(base_model, imsize, triple_loss_function, identity_loss_functi
     return model
 
 
-def siamese_model2(base_model, imsize, triple_loss_function, identity_loss_function, learning_rate=0.001):
+def siamese_model2(base_model, sent_emb, triple_loss_function, identity_loss_function, learning_rate=0.001):
     """
     Create the complete model with three
     embedding models and minimize the loss 
     between their output embeddings
     """
-    input_1 = Input((imsize, 1))
-    input_2 = Input((imsize, 1))
-    input_3 = Input((imsize, 1))
+    input_1 = Input((sent_emb, 1))
+    input_2 = Input((sent_emb, 1))
+    input_3 = Input((sent_emb, 1))
         
     A = base_model(input_1)
     P = base_model(input_2)

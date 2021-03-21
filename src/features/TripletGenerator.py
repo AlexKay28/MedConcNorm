@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class TripletGenerator:
@@ -7,21 +8,20 @@ class TripletGenerator:
         self.n_jobs = n_jobs
         
     def get_observation(self, X, y, label):
-        idx = np.random.randint(len(y))
-        while y[idx] != label:
-            # keep searching randomly
-            idx = np.random.randint(len(y))
+        y_labels_indices = np.array(list(range(y.shape[0])))
+        y_label = y_labels_indices[y==label]
+        idx = random.choice(y_label)
         return X[idx]
 
     def get_triplet(self, X, y, n_classes=10):
         # choose random class
-        neg = anchor = np.random.randint(n_classes)
+        neg = anchor = random.choice(y)
         
         # n - negative, should be different class
         while neg == anchor:
             # keep searching randomly
-            neg = np.random.randint(n_classes)
-        
+            neg = random.choice(y)
+            
         # p - positive class, will be example of the same class
         anchor_get = self.get_observation(X, y, anchor)
         pos_get    = self.get_observation(X, y, anchor)

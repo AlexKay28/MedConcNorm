@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Convolution2D, MaxPooling2D
+from keras.layers import Dense, Dropout, Flatten, Convolution2D, MaxPooling1D
 
 
 def base_model():
@@ -18,9 +18,14 @@ def base_model():
     return model
 
 
-def base_model2():
+def base_model2(n_labels):
     model = Sequential()
-    model.add(Dense(32, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(3))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(32, activation='relu'))    
+    #model.add(MaxPooling1D(pool_size=3))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    #model.add(Dense(n_labels))
+    model.add(Dense(7))
     return model
