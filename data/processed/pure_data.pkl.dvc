@@ -1,0 +1,4 @@
+outs:
+- md5: 4f92dce5055fc41819e7e82ccf8fb169
+  size: 172557
+  path: pure_data.pkl

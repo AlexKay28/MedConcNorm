@@ -1,0 +1,4 @@
+outs:
+- md5: 85b5d4617afd2c78344b30e8c9c1dc1d
+  size: 16561498
+  path: pure_data_vectorized.pkl
