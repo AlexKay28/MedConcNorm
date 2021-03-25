@@ -35,7 +35,6 @@ class SentenceVectorizer:
 
     def vectorize_sent_bert(self, data, text_column="text"):
         model_vec = self.__available_vectorizers['sent2vec']()
-        print('Creating BERT vectores...')
         model_vec.bert(data[text_column])
         vectors = model_vec.vectors
         return pd.concat([data, pd.DataFrame(vectors)], axis=1)

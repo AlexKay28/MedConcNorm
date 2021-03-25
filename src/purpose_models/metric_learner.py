@@ -78,7 +78,7 @@ class StandardUnsupervisedMetricLearner(MetricLearnTool):
         return self.model.fit_transform(X)
 
 
-class MetricLearningAlgorithm:
+class ClassicMetricLearner:
     __mltools_name = {
         # supervised
         'NCA':  StandardSupervisedMetricLearner,

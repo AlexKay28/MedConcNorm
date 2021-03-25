@@ -2,21 +2,23 @@ import numpy as np
 import random
 from tqdm import tqdm
 from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 
 def class_sampler(X, y):
     uniq, counts = np.unique(y, return_counts=True)
     max_index = np.argmax(counts)
     max_value = uniq[max_index]
     max_counts = counts[max_index]
-    
+
     for cls in tqdm(uniq):
         if cls == max_value:
             continue
-        
+
 #         for i in range(5):
 #             X = np.vstack((X, random.choice(X[y==cls])))
 #             y = np.append(y, cls)
-            
+
         for i in range(2):
             n = X[y==cls].shape[0]
             X = np.vstack((X, X[y==cls]))
@@ -30,4 +32,3 @@ def class_sampler(X, y):
     X, y = oversample.fit_resample(X, y)
 
     return X, y
-
