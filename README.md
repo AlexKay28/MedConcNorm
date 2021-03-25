@@ -15,6 +15,7 @@ While working on project next techs are used:
 
 <img src="https://quintagroup.com/cms/technology/Images/docker-compose-button.jpg" width="250" height="120">
 
+LINK: [PROJECT ARCHITECTURE](https://github.com/AlexKay28/MedConcNorm/blob/main/reports/MagistryProject_normalization.pdf)
 
 Project Organization
 ------------
@@ -54,8 +55,12 @@ Project Organization
     │   ├── features       <- Scripts to turn raw data into features for modeling
     │   │   └── build_features.py
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
+    │   ├── support models         <- Scripts to train models and then use trained models to make
+    │   │   │                         embedding preparations
+    │   │   ├── predict_model.py
+    │   │   └── train_model.py
+    │   ├── purpose models         <- Scripts to train models and then use trained models to make
+    │   │   │                         general task classification predictions
     │   │   ├── predict_model.py
     │   │   └── train_model.py
     │   │
