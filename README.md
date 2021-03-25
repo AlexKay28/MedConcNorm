@@ -54,8 +54,12 @@ Project Organization
     │   ├── features       <- Scripts to turn raw data into features for modeling
     │   │   └── build_features.py
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
+    │   ├── support models         <- Scripts to train models and then use trained models to make
+    │   │   │                         embedding preparations
+    │   │   ├── predict_model.py
+    │   │   └── train_model.py
+    │   ├── purpose models         <- Scripts to train models and then use trained models to make
+    │   │   │                         general task classification predictions
     │   │   ├── predict_model.py
     │   │   └── train_model.py
     │   │
