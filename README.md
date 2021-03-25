@@ -15,7 +15,7 @@ While working on project next techs are used:
 
 <img src="https://quintagroup.com/cms/technology/Images/docker-compose-button.jpg" width="250" height="120">
 
-![PROJECT ARCHITECTURE](https://github.com/AlexKay28/MedConcNorm/blob/main/reports/MagistryProject_normalization.pdf)
+LINK: [PROJECT ARCHITECTURE](https://github.com/AlexKay28/MedConcNorm/blob/main/reports/MagistryProject_normalization.pdf)
 
 Project Organization
 ------------
