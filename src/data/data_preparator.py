@@ -14,16 +14,6 @@ class DataPreparator:
     def __init__(self, n_jobs=5):
         self.n_jobs = n_jobs
 
-    def get_prepared_data(self):
-        if DATA_TYPE == 'pure':
-            data = self.prepare_pure_data()
-        elif DATA_TYPE == 'enriched':
-            data = self.prepare_enriched_data()
-
-        pass
-
-        return X_train, y_train, X_test, y_test
-
     def hand_craft(self):
         pass #TODO
 
@@ -34,7 +24,7 @@ class DataPreparator:
         """
         Prepare only from SMM4H datasets 2017 and 2021
         """
-        # smm4h17
+        # smm4h17 work with group of files
         path_smm4h17 = '../data/external/smm4h_2017/'
         files = []
         for file in os.listdir(path_smm4h17):
@@ -45,16 +35,13 @@ class DataPreparator:
             2: 'code'
         })[['text', 'code']].drop_duplicates(subset=['text'])
 
-        # smm4h21
-        smm4h21 = pd.read_csv('../data/external/smm4h_2021/SMM4H_2021_train_spans.tsv', sep='\t', header=None)
+        # smm4h21 work with single file now
+        path_smm4h21 = '../data/external/smm4h_2021/SMM4H_2021_train_spans.tsv'
+        smm4h21 = pd.read_csv(path_smm4h21, sep='\t', header=None)
         smm4h21 = smm4h21.rename(columns={
             4: 'text',
             5: 'code'
         })[['text', 'code']].drop_duplicates(subset=['text'])
-        smm4h21_tweets = pd.read_csv('../data/external/smm4h_2021/SMM4H_2021_train_tweets.tsv',
-            sep='\t', header=None)
-
-
 
         pure_data = pd.concat([smm4h17, smm4h21]).drop_duplicates('text').reset_index(drop=True)
 
