@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+tqdm.pandas()
+
+import tensorflow as tf
+from transformers import BertTokenizer, TFBertModel
 
 from tensorflow.keras.preprocessing.text import Tokenizer
 from sent2vec.vectorizer import Vectorizer
@@ -38,6 +43,34 @@ class SentenceVectorizer:
         model_vec.bert(data[text_column])
         vectors = model_vec.vectors
         return pd.concat([data, pd.DataFrame(vectors)], axis=1)
+
+    def vectorize_span_bert(self, data, text_col='text', term_col='term', bert_type='bert-base-uncased', agg_type='mean'):
+        tokenizer = BertTokenizer.from_pretrained(bert_type)
+        model = TFBertModel.from_pretrained(bert_type)
+
+        def get_vecors_from_context(text, span):
+            span_vecs = []
+            text_tokens = tokenizer.tokenize(text)
+            span_tokens = tokenizer.tokenize(span)
+            word_ids = tokenizer.encode(text_tokens)
+            words_tokenized = tokenizer.decode(word_ids)
+            word_ids_tf = tf.constant(word_ids)[None, :]  # Batch size 1
+            outputs = model(word_ids_tf)
+            vectors = outputs[0][0]  # The last hidden-state is the first element of the output tuple
+            for word, code, vector in zip(text_tokens, word_ids, vectors):
+                if word in span_tokens:
+                    span_vecs.append(vector.numpy())
+            return span_vecs
+
+        def aggregation_type(numpy_array):
+            agg = {
+                'sum': np.sum,
+                'mean': np.mean
+            }
+            return agg['mean'](numpy_array, axis=0)
+
+        data['term_vec'] = data.progress_apply(lambda x: aggregation_type(get_vecors_from_context(x[text_col], x[term_col])), axis=1)
+        return data
 
     def get_availables_vectorizers(self):
         return self.__available_vectorizers.keys()
