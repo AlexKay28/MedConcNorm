@@ -14,7 +14,7 @@ from src.support_models.siamese_model_architecture import siamese_model
 sent_emb = 768
 batch_size = 256
 lr = 1e-3
-EPOCHS = 10
+EPOCHS = 100
 alpha = 0.2
 #monitor = "val_loss"
 patience = 15
@@ -33,23 +33,8 @@ class SiameseMetricLearner:
 
 
     def fit(self, X, y):
-
-        #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-
         tgen = TripletGenerator()
         train_generator = tgen.generate_triplets(X, y, batch_size)
-        #train_generator = tgen.generate_triplets(X_train, y_train, batch_size)
-        #test_generator = tgen.generate_triplets(X_test, y_test, batch_size)
-
-        # early_stopping_callback = EarlyStopping(
-        #     monitor=monitor,
-        #     min_delta=0,
-        #     patience=patience,
-        #     verbose=1,
-        #     mode="auto",
-        #     baseline=None,
-        #     restore_best_weights=False,
-        # )
 
         history = self.learner.fit_generator(train_generator,
                                              #validation_data=test_generator,

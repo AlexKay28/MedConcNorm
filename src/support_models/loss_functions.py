@@ -5,7 +5,7 @@ from keras import backend as K
 def identity_loss(y_true, y_pred):
     return K.mean(y_pred)
 
-def triplet_loss(x, alpha = 0.01):
+def triplet_loss(x, alpha = 0.6):
     # Triplet Loss function.
     anchor, positive, negative = x
     # distance between the anchor and the positive

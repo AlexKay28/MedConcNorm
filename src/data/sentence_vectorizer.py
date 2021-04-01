@@ -3,6 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 tqdm.pandas()
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 import tensorflow as tf
 from transformers import BertTokenizer, TFBertModel
 
@@ -21,6 +23,7 @@ class SentenceVectorizer:
 
     def __init__(self, n_jobs=5):
         self.n_jobs = n_jobs
+        self.tfidf_vectorizer = None
 
     def tokenize_sent(self, data, model_tok, text_column="text", num_words=5000, oov_token="<OOV>"):
         self.model_tok = self.__available_tokenizers[model_tok]()
@@ -29,8 +32,25 @@ class SentenceVectorizer:
     def vectorize_sent_bow(self, data, text_column="text"):
         pass #TODO
 
-    def vectorize_sent_tfidf(self, data, text_column="text"):
-        pass #TODO
+    def vectorize_sent_tfidf(self, data_train, data_test, feat_col='term', text_columns=None):
+        min_df = 10
+        max_df = 500
+        max_features = 400
+
+        self.tfidf_vectorizer = TfidfVectorizer(stop_words='english', min_df=min_df, max_df=max_df, max_features=max_features)
+
+        texts = []
+        for col in text_columns:
+            texts += data_train[col].to_list()
+
+        self.tfidf_vectorizer.fit(texts)
+
+        emb = self.tfidf_vectorizer.transform(data_train['term']).toarray()
+        data_train['term_vec'] = [[i] for i in emb]
+        emb = self.tfidf_vectorizer.transform(data_test['term']).toarray()
+        data_test['term_vec'] = [[i] for i in emb]
+
+        return data_train, data_test
 
     def vectorize_sent_w2v(self, data, text_column="text"):
         pass #TODO
