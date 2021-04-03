@@ -7,14 +7,13 @@ from src.data.sentence_vectorizer import SentenceVectorizer
 from src.purpose_models.trainer import Trainer
 from argparse import ArgumentParser
 
+import mlflow
+import mlflow.sklearn
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--use_ml",
-        dest="use_ml",
-        help="use_ml",
-        default=False,
-        type=bool)
+    parser.add_argument("--experiment_name", default="Best baseline", type=str)
+    parser.add_argument("--use_ml", default=False, type=bool)
     args = parser.parse_args()
     print(args)
 
@@ -22,13 +21,23 @@ def main():
     labels = labels['CODE']
     meddra_labels = {v:k for k, v in enumerate(labels.unique())}
     results = {
-        'vectorizer': [],
-        'train_model': [],
-        'smm4h21': [],
-        'smm4h17': [],
-        'psytar': [],
-        'cadec': [],
+        'vectorizer': [], 'train_model': [],
+        'smm4h21': [],    'smm4h17': [],
+        'psytar': [],     'cadec': [],
     }
+
+    # configure mlflow
+    mlflow.set_experiment(args.experiment_name)
+    client = mlflow.tracking.MlflowClient()
+    experiment_id = client.get_experiment_by_name(args.experiment_name).experiment_id
+    notes = """
+        SMM4H17: 65, 87-90, 97.73
+        SMM4H21(20): 36-37, 42-44, 43-45
+        CADEC: 72.72, 70-83. 86.4, 86.93
+        PsyTar: 74.39, 77-82, 85.04, 87.7
+    """
+    client.set_experiment_tag(experiment_id, "mlflow.note.content", notes)
+
     sv = SentenceVectorizer()
     for vectorizer_name in sv.get_availables_vectorizers():
         print(f"vectorizer: {vectorizer_name}")
@@ -58,19 +67,33 @@ def main():
             for name_test in os.listdir(path):
                 if name_test not in ['smm4h17', 'smm4h21', 'psytar', 'cadec']:
                     continue
-                folder = os.path.join(path, name_test)
-                corpus_test = folder + '/test.csv'
-                test = pd.read_csv(corpus_test)
-                test = sv.vectorize(test, vectorizer_name=vectorizer_name)
-                X_test, y_test = test['term_vec'], test['code']
-                X_test = pd.DataFrame([pd.Series(x) for x in X_test])
-                y_test = y_test.apply(lambda x: int(meddra_labels[x]))
 
-                score = trainer.evaluate_model(X_test, y_test)
-                print(f'\ttest with {name_test} score:', score)
-                results[name_test].append(score)
-    results = pd.DataFrame(results)
-    print(results)
+                with mlflow.start_run() as run:
+
+                    mlflow.set_tag("mlflow.note.content","<my_note_here>")
+                    folder = os.path.join(path, name_test)
+                    corpus_test = folder + '/test.csv'
+                    test = pd.read_csv(corpus_test)
+                    test = sv.vectorize(test, vectorizer_name=vectorizer_name)
+                    X_test, y_test = test['term_vec'], test['code']
+                    X_test = pd.DataFrame([pd.Series(x) for x in X_test])
+                    y_test = y_test.apply(lambda x: int(meddra_labels[x]))
+
+                    score = trainer.evaluate_model(X_test, y_test)
+                    print(f'\ttest with {name_test} score:', score)
+                    results[name_test].append(score)
+
+                    # MLFLOW LOGS
+                    mlflow.log_param('vectorizer', vectorizer_name)
+                    mlflow.log_param('train corpus', name_train)
+                    mlflow.log_param('test corpus', name_test)
+                    mlflow.log_param("use_metric_learning", args.use_ml)
+
+                    mlflow.log_metric("accuracy", score)
+                    mlflow.set_tag("exp_name", 'first')
+
+                    mlflow.sklearn.log_model(trainer.model, "model")
+
 
 if __name__ == "__main__":
     main()

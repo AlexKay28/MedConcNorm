@@ -24,8 +24,8 @@ class SentenceVectorizer:
     }
     __available_vectorizers = {
         # 'tfidf': 1,
-        'sent2vec': 1,
         'fasttext': 1,
+        'sent2vec': 1,
         'bert': 1
     }
 
