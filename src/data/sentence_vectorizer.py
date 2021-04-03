@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -22,15 +23,15 @@ class SentenceVectorizer:
         'tf_keras': Tokenizer
     }
     __available_vectorizers = {
-        #'sent2vec': 1,
-        #'fasttext': 1,
-        #'tfidf': 1,
+        # 'tfidf': 1,
+        'sent2vec': 1,
+        'fasttext': 1,
         'bert': 1
     }
 
     def __init__(self, n_jobs=5):
         self.n_jobs = n_jobs
-        self.tfidf_vectorizer = None
+#        self.tfidf_vectorizer = None
 
     def tokenize_sent(self, data, model_tok, text_column="text", num_words=5000, oov_token="<OOV>"):
         self.model_tok = self.__available_tokenizers[model_tok]()
@@ -39,48 +40,20 @@ class SentenceVectorizer:
     def vectorize_sent_bow(self, data, text_column="text"):
         pass #TODO
 
-    def vectorize_sent_sent2vec(self, data_train, data_test, feat_col='term'):
-
+    def vectorize_sent_sent2vec(self, data, feat_col='term'):
         vectorizer = Vectorizer()
-        vectorizer.bert(data_train[feat_col])
-        vectors_train = vectorizer.vectors
-        vectorizer.bert(data_test[feat_col])
-        vectors_test= vectorizer.vectors
-
-        data_train[feat_col+'_vec'] = [[i][0] for i in vectors_train]
-        data_test[feat_col+'_vec'] = [[i][0] for i in vectors_test]
-
-        return data_train, data_test
-
-    def vectorize_sent_tfidf(self, data_train, data_test, feat_col='term', text_columns=None):
-        min_df = 10
-        max_df = 500
-        max_features = 400
-
-        self.tfidf_vectorizer = TfidfVectorizer(stop_words='english', min_df=min_df, max_df=max_df, max_features=max_features)
-
-        texts = []
-        for col in text_columns:
-            texts += data_train[col].to_list()
-
-        self.tfidf_vectorizer.fit(texts)
-
-        emb = self.tfidf_vectorizer.transform(data_train['term']).toarray()
-        data_train[feat_col+'_vec'] = [[i][0] for i in emb]
-        emb = self.tfidf_vectorizer.transform(data_test['term']).toarray()
-        data_test[feat_col+'_vec'] = [[i][0] for i in emb]
-
-        return data_train, data_test
+        vectorizer.bert(data[feat_col])
+        vectors = vectorizer.vectors
+        data[feat_col+'_vec'] = [[i][0] for i in vectors]
+        return data
 
     def vectorize_sent_w2v(self, data, text_column="text"):
         pass #TODO
 
-    def vectorize_sent_ft(self, data_train, data_test, feat_col='term', text_columns=None, size=VEC_SIZE):
-
+    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE):
         model = FastText(size=size, window=5, min_count=1)
         model.build_vocab(sentences=common_texts)
         model.train(sentences=common_texts, total_examples=len(common_texts), epochs=10)
-
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
                 if agg_type == 'avg':
@@ -89,11 +62,8 @@ class SentenceVectorizer:
             sent = np.array([model.wv[word] for word in sent])
             sent_vec = aggregate(sent, 'avg')
             return sent_vec
-
-        data_train[feat_col+'_vec'] = data_train[feat_col].apply(lambda x: sent2vec(x))
-        data_test[feat_col+'_vec'] = data_test[feat_col].apply(lambda x: sent2vec(x))
-
-        return data_train, data_test
+        data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+        return data
 
     def vectorize_sent_bert(self, data, text_column="text"):
         model_vec = self.__available_vectorizers['sent2vec']()
@@ -101,12 +71,27 @@ class SentenceVectorizer:
         vectors = model_vec.vectors
         return pd.concat([data, pd.DataFrame(vectors)], axis=1)
 
-    def vectorize_span_bert(self, data_train, data_test, feat_col='term', text_col='text', bert_type='bert-base-uncased', agg_type='mean'):
+    def vectorize_span_bert(self, data, feat_col='term', text_col='text', bert_type='bert-base-uncased', agg_type='mean'):
         tokenizer = BertTokenizer.from_pretrained(bert_type)
         model = TFBertModel.from_pretrained(bert_type)
 
         def get_vecors_from_context(text, span):
+            if len(text) > 512:
+                try:
+                    #print('BIG TEXT')
+                    start = re.search(span.lower(), text.lower())
+                    if start is None:
+                        text = span
+                    else:
+                        start = start.span()[0]
+                        start = 0 if start-255 < 0 else start-255
+                        text = text[start:start+256]
+                except Exception as e:
+                    print(e)
+                    print(text)
+                    text = span
             span_vecs = []
+            #print('the text:', text)
             text_tokens = tokenizer.tokenize(text)
             span_tokens = tokenizer.tokenize(span)
             word_ids = tokenizer.encode(text_tokens)
@@ -126,21 +111,25 @@ class SentenceVectorizer:
             }
             return agg['mean'](numpy_array, axis=0)
 
-        data_train[feat_col+'_vec'] = data_train.progress_apply(lambda x: aggregation_type(get_vecors_from_context(x[text_col], x[feat_col])), axis=1)
-        data_test[feat_col+'_vec'] = data_test.progress_apply(lambda x: aggregation_type(get_vecors_from_context(x[text_col], x[feat_col])), axis=1)
-        return data_train.dropna(), data_test.dropna()
+        if text_col in data.columns:
+            data[feat_col+'_vec'] = data.progress_apply(
+                lambda x: aggregation_type(get_vecors_from_context(x[text_col], x[feat_col])), axis=1)
+        else:
+            data[feat_col+'_vec'] = data.progress_apply(
+                lambda x: aggregation_type(get_vecors_from_context(x[feat_col], x[feat_col])), axis=1)
+        return data.dropna()
 
-    def vectorize(self, data_train, data_test, vectorizer_name='fasttext'):
+    def vectorize(self, data, vectorizer_name='fasttext'):
 
         if vectorizer_name=='fasttext':
-            train, test = self.vectorize_sent_ft(data_train, data_test)
+            data = self.vectorize_sent_ft(data)
         elif vectorizer_name=='bert':
-            train, test = self.vectorize_span_bert(data_train, data_test)
+            data = self.vectorize_span_bert(data)
         elif vectorizer_name=='sent2vec':
-            train, test = self.vectorize_sent_sent2vec(data_train, data_test)
+            data = self.vectorize_sent_sent2vec(data)
         else:
             raise KeyError('Unknown vectorizer!')
-        return train, test
+        return data
 
 
     def get_availables_vectorizers(self):
