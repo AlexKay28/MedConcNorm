@@ -14,20 +14,25 @@ from sent2vec.vectorizer import Vectorizer
 
 from gensim.models import FastText
 from gensim.test.utils import common_texts
+from gensim.utils import tokenize
 
 VEC_SIZE = 100
+ft_model_path = 'data/external/embeddings/cc.en.300.bin'
+
 
 class SentenceVectorizer:
 
     __available_tokenizers = {
         'tf_keras': Tokenizer
     }
-    __available_vectorizers = {
-        # 'tfidf': 1,
-        'fasttext': 1,
-        'sent2vec': 1,
-        'bert': 1
-    }
+    __available_vectorizers = [
+        'fasttext_default_100', 'fasttext_default_300',
+        'fasttext_cadec_100', 'fasttext_cadec_300',
+        'fasttext_facebook',
+        'bert-base-uncased',
+        'bert-PubMed', 'bert-PubMed-large'
+        #'sent2vec'
+    ]
 
     def __init__(self, n_jobs=5):
         self.n_jobs = n_jobs
@@ -47,18 +52,33 @@ class SentenceVectorizer:
         data[feat_col+'_vec'] = [[i][0] for i in vectors]
         return data
 
-    def vectorize_sent_w2v(self, data, text_column="text"):
-        pass #TODO
-
-    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE):
+    def pretrain_ft__model(self, corpus='default', size=100):
         model = FastText(size=size, window=5, min_count=1)
-        model.build_vocab(sentences=common_texts)
-        model.train(sentences=common_texts, total_examples=len(common_texts), epochs=10)
+        if corpus=='default':
+            sentences = common_texts
+            model.build_vocab(sentences=sentences)
+            model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
+        elif corpus=='cadec':
+            sentences = pd.read_csv('data/interim/cadec/test.csv')['text'].apply(
+                lambda x: x.split('<SENT>')).explode().to_list()
+            model.build_vocab(sentences=sentences)
+            model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
+        else:
+            raise KeyError('Unknown corpus name! (Kay)')
+        return model
+
+    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=100,
+                                corpus='default', use_facebook_ft=False):
+        if use_facebook_ft:
+            model = FastText.load_fasttext_format(ft_model_path)
+        else:
+            model = self.pretrain_ft__model(corpus=corpus, size=size)
+
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
                 if agg_type == 'avg':
                     return vecs.mean(axis=0)
-            sent = sent.split(' ')
+            sent = list(tokenize(sent, lower=True))
             sent = np.array([model.wv[word] for word in sent])
             sent_vec = aggregate(sent, 'avg')
             return sent_vec
@@ -71,7 +91,8 @@ class SentenceVectorizer:
         vectors = model_vec.vectors
         return pd.concat([data, pd.DataFrame(vectors)], axis=1)
 
-    def vectorize_span_bert(self, data, feat_col='term', text_col='text', bert_type='bert-base-uncased', agg_type='mean'):
+    def vectorize_span_bert(self, data, feat_col='term', text_col='text',
+                                  bert_type='bert-base-uncased', agg_type='mean'):
         tokenizer = BertTokenizer.from_pretrained(bert_type)
         model = TFBertModel.from_pretrained(bert_type)
 
@@ -121,10 +142,22 @@ class SentenceVectorizer:
 
     def vectorize(self, data, vectorizer_name='fasttext'):
 
-        if vectorizer_name=='fasttext':
-            data = self.vectorize_sent_ft(data)
-        elif vectorizer_name=='bert':
-            data = self.vectorize_span_bert(data)
+        if vectorizer_name=='fasttext_default_100':
+            data = self.vectorize_sent_ft(data, size=100, corpus='default', use_facebook_ft=False)
+        elif vectorizer_name=='fasttext_default_300':
+            data = self.vectorize_sent_ft(data, size=300, corpus='default', use_facebook_ft=False)
+        elif vectorizer_name=='fasttext_cadec_100':
+            data = self.vectorize_sent_ft(data, size=100, corpus='cadec', use_facebook_ft=False)
+        elif vectorizer_name=='fasttext_cadec_300':
+            data = self.vectorize_sent_ft(data, size=300, corpus='cadec', use_facebook_ft=False)
+        elif vectorizer_name=='fasttext_facebook':
+            data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+        elif vectorizer_name=='bert-base-uncased':
+            data = self.vectorize_span_bert(data, bert_type='bert-base-uncased')
+        elif vectorizer_name=='bert-PubMed':
+            data = self.vectorize_span_bert(data, bert_type='cambridgeltl/SapBERT-from-PubMedBERT-fulltext')
+        elif vectorizer_name=='bert-PubMed-large':
+            data = self.vectorize_span_bert(data, bert_type='patrickvonplaten/led-large-16384-pubmed')
         elif vectorizer_name=='sent2vec':
             data = self.vectorize_sent_sent2vec(data)
         else:
@@ -133,4 +166,4 @@ class SentenceVectorizer:
 
 
     def get_availables_vectorizers(self):
-        return self.__available_vectorizers.keys()
+        return self.__available_vectorizers
