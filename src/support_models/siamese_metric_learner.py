@@ -14,7 +14,7 @@ from src.support_models.siamese_model_architecture import siamese_model
 sent_emb = 768
 batch_size = 256
 lr = 1e-3
-EPOCHS = 100
+EPOCHS = 20
 alpha = 0.2
 #monitor = "val_loss"
 patience = 15
@@ -27,10 +27,8 @@ class SiameseMetricLearner:
         self.emb_model = base_model(sent_emb)
         self.learner = siamese_model(self.emb_model, sent_emb, triplet_loss, identity_loss, learning_rate=lr)
 
-
     def summary(self):
         return self.learner.summary()
-
 
     def fit(self, X, y):
         tgen = TripletGenerator()

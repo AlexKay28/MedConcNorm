@@ -85,10 +85,8 @@ def main():
                             score = trainer.accuracy(X_test, y_test, k=k)
                             print(f'\ttest with {name_test} acc@{k}:', score)
                             mlflow.log_metric(f"accuracy_{k}", score)
-
                         mlflow.set_tag("exp_name", 'first')
-
-                        mlflow.sklearn.log_model(trainer.model, "model")
+                        #mlflow.sklearn.log_model(trainer.model, "model")
 
 
 if __name__ == "__main__":

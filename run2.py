@@ -55,7 +55,7 @@ def run_pipe(sv, vectorizer_name, meddra_labels, name_train, corpus_train, name_
             print(f'\ttest with {name_test} acc@{k}:', score)
             mlflow.log_metric(f"accuracy_{k}", score)
         mlflow.set_tag("exp_name", 'first')
-        mlflow.sklearn.log_model(trainer.model, "model")
+        #mlflow.sklearn.log_model(trainer.model, "model")
 
 
 def main():

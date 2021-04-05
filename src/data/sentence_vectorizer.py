@@ -30,7 +30,8 @@ class SentenceVectorizer:
         'fasttext_cadec_100', 'fasttext_cadec_300',
         'fasttext_facebook',
         'bert-base-uncased',
-        'bert-PubMed', 'bert-PubMed-large'
+        'bert-PubMed',
+        "bertweet-base"
         #'sent2vec'
     ]
 
@@ -156,8 +157,8 @@ class SentenceVectorizer:
             data = self.vectorize_span_bert(data, bert_type='bert-base-uncased')
         elif vectorizer_name=='bert-PubMed':
             data = self.vectorize_span_bert(data, bert_type='cambridgeltl/SapBERT-from-PubMedBERT-fulltext')
-        elif vectorizer_name=='bert-PubMed-large':
-            data = self.vectorize_span_bert(data, bert_type='patrickvonplaten/led-large-16384-pubmed')
+        elif vectorizer_name=='bertweet-base':
+            data = self.vectorize_span_bert(data, bert_type="vinai/bertweet-base")
         elif vectorizer_name=='sent2vec':
             data = self.vectorize_sent_sent2vec(data)
         else:
