@@ -60,8 +60,8 @@ class SentenceVectorizer:
             model.build_vocab(sentences=sentences)
             model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
         elif corpus=='cadec':
-            sentences = pd.read_csv('data/interim/cadec/test.csv')['text'].apply(
-                lambda x: x.split('<SENT>')).explode().to_list()
+            sentences = pd.read_csv('../data/interim/cadec/test.csv')['text'].apply(
+                lambda x: x.split('<SENT>')).explode().apply(lambda x: list(tokenize(x))).to_list()
             model.build_vocab(sentences=sentences)
             model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
         else:
