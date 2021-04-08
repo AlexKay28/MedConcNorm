@@ -1,0 +1,11 @@
+general:
+  n_jobs: 5
+  random_seed: 42
+preprocessing:
+  fasttext_model:
+    epochs: 10
+    window: 3
+  sentence_vec: 300
+  sentence_vectorizer: fasttext_cadec_100
+  use_facebook: false
+  use_metric_learning: true

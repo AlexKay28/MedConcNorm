@@ -1,0 +1,4 @@
+outs:
+- md5: 2f12da92f632abb5f7c03fd925f40e1e
+  size: 5152752
+  path: encoder_cadec.h5

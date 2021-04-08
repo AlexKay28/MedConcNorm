@@ -7,16 +7,22 @@ tqdm.pandas()
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 import tensorflow as tf
-from transformers import BertTokenizer, TFBertModel
-
 from tensorflow.keras.preprocessing.text import Tokenizer
 from sent2vec.vectorizer import Vectorizer
+from transformers import BertTokenizer, TFBertModel
 
 from gensim.models import FastText
 from gensim.test.utils import common_texts
 from gensim.utils import tokenize
 
-VEC_SIZE = 100
+from src.configs import GENERAL, PREPROCESSING
+
+N_JOBS = GENERAL['n_jobs']
+VEC_SIZE = PREPROCESSING['sentence_vec']
+USE_FACEBOOK = PREPROCESSING['use_facebook']
+FT_EPOCHS = PREPROCESSING['fasttext_model']['epochs']
+FT_WINDOW = PREPROCESSING['fasttext_model']['window']
+
 ft_model_path = 'data/external/embeddings/cc.en.300.bin'
 
 
@@ -53,22 +59,22 @@ class SentenceVectorizer:
         data[feat_col+'_vec'] = [[i][0] for i in vectors]
         return data
 
-    def pretrain_ft__model(self, corpus='default', size=100):
-        model = FastText(size=size, window=5, min_count=1)
+    def pretrain_ft__model(self, corpus='default', size=VEC_SIZE, epochs=FT_EPOCHS, window=FT_WINDOW):
+        model = FastText(size=size, window=window, min_count=1)
         if corpus=='default':
             sentences = common_texts
             model.build_vocab(sentences=sentences)
-            model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
+            model.train(sentences=sentences, total_examples=len(sentences), epochs=epochs)
         elif corpus=='cadec':
             sentences = pd.read_csv('../data/interim/cadec/test.csv')['text'].apply(
                 lambda x: x.split('<SENT>')).explode().apply(lambda x: list(tokenize(x))).to_list()
             model.build_vocab(sentences=sentences)
-            model.train(sentences=sentences, total_examples=len(sentences), epochs=10)
+            model.train(sentences=sentences, total_examples=len(sentences), epochs=epochs)
         else:
             raise KeyError('Unknown corpus name! (Kay)')
         return model
 
-    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=100,
+    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE,
                                 corpus='default', use_facebook_ft=False):
         if use_facebook_ft:
             model = FastText.load_fasttext_format(ft_model_path)

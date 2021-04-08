@@ -1,0 +1,38 @@
+general:
+  n_jobs: 5
+  random_seed: 42
+
+preprocessing:
+
+  sentence_vectorizer:
+    - fasttext_default_100
+    - fasttext_default_300
+    - fasttext_cadec_100
+    - fasttext_cadec_300
+    # - fasttext_facebook
+    - bert-base-uncased
+    # - bert-PubMed
+    # - bertweet-base
+
+  fasttext_model:
+    epochs:
+      - 5
+      - 10
+      - 15
+    window:
+      - 3
+      - 5
+      - 7
+
+  use_metric_learning:
+    - True
+    - False
+
+  use_facebook:
+    #- True
+    - False
+
+  sentence_vec:
+    - 50
+    - 100
+    - 300
