@@ -32,7 +32,7 @@ class StandardSupervisedMetricLearner(MetricLearnTool):
         RCA_Supervised, SCML_Supervised
     )
     def __init__(self, name, params):
-        self.model = eval(f"self.{name}")(**params)
+        self.model = eval(f"self.{name}")() #(**params)
 
     def fit(self, X, y):
         self.model.fit(X, y)
@@ -78,7 +78,7 @@ class StandardUnsupervisedMetricLearner(MetricLearnTool):
 
 
 class ClassicMetricLearner:
-    __mltools_name = {
+    __mltool_names = {
         # supervised
         'NCA':  StandardSupervisedMetricLearner,
         'LFDA': StandardSupervisedMetricLearner,
@@ -101,8 +101,8 @@ class ClassicMetricLearner:
 
     def __init__(self, mltool_name=MLTOOL_NAME, mltool_params=MLTOOL_ARGS, n_jobs=N_JOBS):
         self.mltool_name = mltool_name
-        self.mltool_params = mltool_params if mltool_params is not None else {}
-        self.model = self.__mltools_name[self.mltool_name](self.mltool_name, self.mltool_params)
+        self.mltool_params = {} #mltool_params if mltool_params is not None else {}
+        self.model = self.__mltool_names[self.mltool_name](self.mltool_name, self.mltool_params)
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
@@ -116,4 +116,4 @@ class ClassicMetricLearner:
 
     @classmethod
     def available_mltools(self):
-        return self.__mltools_name.keys()
+        return self.__mltool_names.keys()

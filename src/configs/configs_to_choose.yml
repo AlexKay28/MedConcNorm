@@ -24,10 +24,6 @@ preprocessing:
       - 5
       - 7
 
-  use_metric_learning:
-    - True
-    - False
-
   use_facebook:
     #- True
     - False
@@ -36,3 +32,16 @@ preprocessing:
     - 50
     - 100
     - 300
+
+modeling:
+  metric_learner_name:
+    # - NCA
+    # - LMNN
+    # - LFDA
+    - siamese
+  use_metric_learning:
+    - True
+    - False
+
+  model_name:
+    - SVC

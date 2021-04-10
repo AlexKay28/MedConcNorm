@@ -38,6 +38,7 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
 
     print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
     train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+    train = train.dropna()
     X_train, y_train = train['term_vec'], train['code']
     X_train = pd.DataFrame([pd.Series(x) for x in X_train])
     y_train = y_train.apply(lambda x: int(meddra_labels[x]))

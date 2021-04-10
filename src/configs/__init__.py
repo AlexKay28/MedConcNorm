@@ -55,3 +55,4 @@ except FileNotFoundError:
 
 GENERAL = CONFIGURATIONS_PIPE['general']
 PREPROCESSING = CONFIGURATIONS_PIPE['preprocessing']
+MODELING = CONFIGURATIONS_PIPE['modeling']

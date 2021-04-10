@@ -7,7 +7,6 @@ tqdm.pandas()
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
 from sent2vec.vectorizer import Vectorizer
 from transformers import BertTokenizer, TFBertModel
 
@@ -16,6 +15,7 @@ from gensim.test.utils import common_texts
 from gensim.utils import tokenize
 
 from src.configs import GENERAL, PREPROCESSING
+from src.data.tokenizer import Tokenizer
 
 N_JOBS = GENERAL['n_jobs']
 VEC_SIZE = PREPROCESSING['sentence_vec']
@@ -23,14 +23,13 @@ USE_FACEBOOK = PREPROCESSING['use_facebook']
 FT_EPOCHS = PREPROCESSING['fasttext_model']['epochs']
 FT_WINDOW = PREPROCESSING['fasttext_model']['window']
 
+TOKENIZER_NAME = 'nltk'
+
 ft_model_path = 'data/external/embeddings/cc.en.300.bin'
 
 
 class SentenceVectorizer:
 
-    __available_tokenizers = {
-        'tf_keras': Tokenizer
-    }
     __available_vectorizers = [
         'fasttext_default_100', 'fasttext_default_300',
         'fasttext_cadec_100', 'fasttext_cadec_300',
@@ -43,14 +42,8 @@ class SentenceVectorizer:
 
     def __init__(self, n_jobs=5):
         self.n_jobs = n_jobs
-#        self.tfidf_vectorizer = None
+        self.word_tokenizer = Tokenizer(TOKENIZER_NAME)
 
-    def tokenize_sent(self, data, model_tok, text_column="text", num_words=5000, oov_token="<OOV>"):
-        self.model_tok = self.__available_tokenizers[model_tok]()
-        pass
-
-    def vectorize_sent_bow(self, data, text_column="text"):
-        pass #TODO
 
     def vectorize_sent_sent2vec(self, data, feat_col='term'):
         vectorizer = Vectorizer()
@@ -66,7 +59,7 @@ class SentenceVectorizer:
             model.build_vocab(sentences=sentences)
             model.train(sentences=sentences, total_examples=len(sentences), epochs=epochs)
         elif corpus=='cadec':
-            sentences = pd.read_csv('../data/interim/cadec/test.csv')['text'].apply(
+            sentences = pd.read_csv('data/interim/cadec/test.csv')['text'].apply(
                 lambda x: x.split('<SENT>')).explode().apply(lambda x: list(tokenize(x))).to_list()
             model.build_vocab(sentences=sentences)
             model.train(sentences=sentences, total_examples=len(sentences), epochs=epochs)
@@ -85,7 +78,7 @@ class SentenceVectorizer:
             def aggregate(vecs, agg_type):
                 if agg_type == 'avg':
                     return vecs.mean(axis=0)
-            sent = list(tokenize(sent, lower=True))
+            sent = self.word_tokenizer.tokenize(sent)
             sent = np.array([model.wv[word] for word in sent])
             sent_vec = aggregate(sent, 'avg')
             return sent_vec
@@ -100,7 +93,7 @@ class SentenceVectorizer:
 
     def vectorize_span_bert(self, data, feat_col='term', text_col='text',
                                   bert_type='bert-base-uncased', agg_type='mean'):
-        tokenizer = BertTokenizer.from_pretrained(bert_type)
+        tokenizer_bert = BertTokenizer.from_pretrained(bert_type)
         model = TFBertModel.from_pretrained(bert_type)
 
         def get_vecors_from_context(text, span):
@@ -120,10 +113,10 @@ class SentenceVectorizer:
                     text = span
             span_vecs = []
             #print('the text:', text)
-            text_tokens = tokenizer.tokenize(text)
-            span_tokens = tokenizer.tokenize(span)
-            word_ids = tokenizer.encode(text_tokens)
-            words_tokenized = tokenizer.decode(word_ids)
+            text_tokens = tokenizer_bert.tokenize(text)
+            span_tokens = tokenizer_bert.tokenize(span)
+            word_ids = tokenizer_bert.encode(text_tokens)
+            words_tokenized = tokenizer_bert.decode(word_ids)
             word_ids_tf = tf.constant(word_ids)[None, :]  # Batch size 1
             outputs = model(word_ids_tf)
             vectors = outputs[0][0]  # The last hidden-state is the first element of the output tuple
@@ -146,6 +139,9 @@ class SentenceVectorizer:
             data[feat_col+'_vec'] = data.progress_apply(
                 lambda x: aggregation_type(get_vecors_from_context(x[feat_col], x[feat_col])), axis=1)
         return data.dropna()
+
+    def vectorize_encoder(self):
+        pass #TODO
 
     def vectorize(self, data, vectorizer_name='fasttext'):
 

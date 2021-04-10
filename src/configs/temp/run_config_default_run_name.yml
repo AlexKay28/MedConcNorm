@@ -1,11 +1,14 @@
 general:
   n_jobs: 5
   random_seed: 42
+modeling:
+  metric_learner_name: siamese
+  model_name: SVC
+  use_metric_learning: false
 preprocessing:
   fasttext_model:
     epochs: 5
     window: 7
   sentence_vec: 300
-  sentence_vectorizer: fasttext_default_300
+  sentence_vectorizer: fasttext_cadec_300
   use_facebook: false
-  use_metric_learning: false

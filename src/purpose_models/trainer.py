@@ -2,21 +2,32 @@ import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
-from metric_learn import NCA
+from metric_learn import NCA, LMNN
 from sklearn.linear_model import SGDClassifier
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.neighbors import NearestNeighbors
 
 
 from src.features.metrics import accuracy_top_K_pobs
-from src.configs import GENERAL, PREPROCESSING
+from src.configs import GENERAL, PREPROCESSING, MODELING
+from src.purpose_models.model_svc import SVC_model
+from src.support_models.metric_learner import MetricLearner
 
 import mlflow
 import mlflow.sklearn
 
-USE_MLALG = PREPROCESSING['use_metric_learning']
+MODEL_NAME = MODELING['model_name']
+METRIC_LEARNER_NAME = MODELING['metric_learner_name']
+USE_MLALG = MODELING['use_metric_learning']
 
 
 class Trainer:
+
+    _models = {
+        'SVC': SVC_model,
+        #'SGD': SGD_model, #TODO
+        #'kNN': kNN_model #TODO
+    }
 
     def __init__(self):
         pass
@@ -29,11 +40,10 @@ class Trainer:
         acc = accuracy_top_K_pobs(y, y_hat, self.model.classes_, k=k)
         return acc
 
-    def train_model(self, X, y, mlalg=USE_MLALG):
-        self.model = SVC(kernel='poly', gamma='scale', probability=True) #, class_weight='balanced')
-        self.model = CalibratedClassifierCV(self.model)
-#        self.model = SGDClassifier(max_iter=1000, tol=1e-3, loss='log')
+    def train_model(self, X, y, mlalg=USE_MLALG, model_name=MODEL_NAME):
+        self.model = self._models[model_name]()
         if mlalg:
             print('USE MERTRIC LEARNING')
-            self.model = make_pipeline(NCA(), self.model)
+            metric_learner = MetricLearner(METRIC_LEARNER_NAME)
+            self.model.add_metric_learner(metric_learner)
         self.model.fit(X, y)
