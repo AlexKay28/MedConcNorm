@@ -36,6 +36,7 @@ class Trainer:
         pass
 
     def accuracy(self, X, y, k=1):
+        X = np.nan_to_num(X)
         y_hat = self.model.predict_proba(X)
         acc = accuracy_top_K_pobs(y, y_hat, self.model.classes_, k=k)
         return acc

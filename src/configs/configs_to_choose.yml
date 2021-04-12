@@ -13,6 +13,7 @@ preprocessing:
     - bert-base-uncased
     # - bert-PubMed
     # - bertweet-base
+    - encoder
 
   fasttext_model:
     epochs:
@@ -35,13 +36,40 @@ preprocessing:
 
 modeling:
   metric_learner_name:
-    # - NCA
-    # - LMNN
-    # - LFDA
+    - NCA
+    #- LMNN
+    - LFDA
     - siamese
   use_metric_learning:
     - True
     - False
+
+  siamese_params:
+    batch_size:
+      - 128
+      - 256
+    lr:
+      - 0.001
+      - 0.005
+    epochs:
+      - 5
+      - 20
+      - 50
+    steps_per_epoch:
+      - 20
+      - 50
+    alpha:
+      - 0.2
+      - 0.6
+      - 1.0
+
+
+  distance_type:
+    - euclidean
+    - cosine
+    - minkowski
+    - chebyshev
+    - cityblock
 
   model_name:
     - SVC

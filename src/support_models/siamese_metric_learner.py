@@ -10,15 +10,13 @@ from src.support_models.loss_functions import triplet_loss, identity_loss
 from src.support_models.base_model import base_model
 from src.support_models.siamese_model_architecture import siamese_model
 
+from src.configs import GENERAL, PREPROCESSING, MODELING
 
-#SENT_EMB = 768
-BATCH_SIZE = 256
-lr = 1e-3
-EPOCHS = 15
-alpha = 0.2
-#monitor = "val_loss"
-patience = 15
-test_size = 0.2
+LR = MODELING['siamese_params']['lr']
+BATCH_SIZE = MODELING['siamese_params']['batch_size']
+EPOCHS = MODELING['siamese_params']['epochs']
+STEPS_PER_EPOCH = MODELING['siamese_params']['steps_per_epoch']
+
 
 class SiameseMetricLearner:
 
@@ -38,14 +36,15 @@ class SiameseMetricLearner:
             self.sent_emb ,
             triplet_loss,
             identity_loss,
-            learning_rate=lr
+            learning_rate=LR
             )
+
         history = self.learner.fit_generator(train_generator,
                                              epochs=epochs,
                                              verbose=1,
-                                             workers=10,
+                                             workers=EPOCHS,
                                              use_multiprocessing=True,
-                                             steps_per_epoch=20
+                                             steps_per_epoch=STEPS_PER_EPOCH,
                                          )
         del self.learner
         del tgen

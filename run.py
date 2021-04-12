@@ -18,10 +18,10 @@ os.environ["EXPERIMENT_NAME"] = EXPERIMENT_NAME
 
 from src.data.sentence_vectorizer import SentenceVectorizer
 from src.purpose_models.trainer import Trainer
-from src.configs import GENERAL, PREPROCESSING, AVAILABLE_CONFIGURATIONS
+from src.configs import GENERAL, PREPROCESSING, AVAILABLE_CONFIGURATIONS, MODELING
 from src.configs import create_random_configuration, delete_process_configuration_file
 
-USE_MLALG = PREPROCESSING['use_metric_learning']
+USE_MLALG = MODELING['use_metric_learning']
 VECTORIZER_NAME = PREPROCESSING['sentence_vectorizer']
 
 def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test):
@@ -36,19 +36,19 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
     print(f"Work with {name_train} ", end='.')
     train = pd.read_csv(corpus_train)
 
-    print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
-    train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
-    train = train.dropna()
-    X_train, y_train = train['term_vec'], train['code']
-    X_train = pd.DataFrame([pd.Series(x) for x in X_train])
-    y_train = y_train.apply(lambda x: int(meddra_labels[x]))
-
-    # FIT MODEL
-    print('Fit model ')
-    trainer = Trainer()
-    trainer.train_model(X_train, y_train)
-
     with mlflow.start_run(run_name=RUN_NAME) as run:
+        print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
+        train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+        train = train.dropna()
+        X_train, y_train = train['term_vec'], train['code']
+        X_train = pd.DataFrame([pd.Series(x) for x in X_train])
+        y_train = y_train.apply(lambda x: int(meddra_labels[x]))
+
+        # FIT MODEL
+        print('Fit model ')
+        trainer = Trainer()
+        trainer.train_model(X_train, y_train)
+
         mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
         # PREPARE TEST SETS
         mlflow.set_tag("mlflow.note.content","<my_note_here>")

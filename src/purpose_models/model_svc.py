@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 
 CV = 5
-N_ITER = 20
+N_ITER = 10
 RANDOM_SEED = 32
 
 
@@ -40,7 +40,7 @@ class SVC_model:
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
-                                      n_jobs=1,
+                                      n_jobs=5,
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
@@ -55,9 +55,8 @@ class SVC_model:
         return decision
 
     def fit(self, X, y):
-        self.model = self.get_best_model_configuration(X, y)
-        #self.model.fit(X, y)
         self.classes_ = np.unique(y)
+        self.model = self.get_best_model_configuration(X, y)
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)

@@ -1,12 +1,15 @@
 import re
 import numpy as np
 import pandas as pd
+import pickle
 from tqdm import tqdm
 tqdm.pandas()
 
+import keras
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 import tensorflow as tf
+from tensorflow.keras.preprocessing import sequence
 from sent2vec.vectorizer import Vectorizer
 from transformers import BertTokenizer, TFBertModel
 
@@ -140,8 +143,19 @@ class SentenceVectorizer:
                 lambda x: aggregation_type(get_vecors_from_context(x[feat_col], x[feat_col])), axis=1)
         return data.dropna()
 
-    def vectorize_encoder(self):
-        pass #TODO
+    def vectorize_encoder(self, data, feat_col='term', max_seq_len=10):
+        with open('models/encoder/tokenizer.pickle', 'rb') as tok:
+            tokenizer = pickle.load(tok)
+        encoder = keras.models.load_model('models/encoder/encoder_cadec.h5')
+        tokenized = tokenizer.texts_to_sequences(data[feat_col])
+        tokenized = sequence.pad_sequences(tokenized, maxlen=max_seq_len)
+        data[feat_col+'_vec'] = tokenizer.texts_to_sequences(data[feat_col])
+        data[feat_col+'_vec'] = sequence.pad_sequences(
+            data[feat_col+'_vec'],
+            maxlen=max_seq_len).tolist()
+        data[feat_col+'_vec'] = data[feat_col+'_vec'].progress_apply(
+            lambda seq: encoder.predict([seq])[0])
+        return data
 
     def vectorize(self, data, vectorizer_name='fasttext'):
 
@@ -163,6 +177,8 @@ class SentenceVectorizer:
             data = self.vectorize_span_bert(data, bert_type="vinai/bertweet-base")
         elif vectorizer_name=='sent2vec':
             data = self.vectorize_sent_sent2vec(data)
+        elif vectorizer_name=='encoder':
+            data = self.vectorize_encoder(data)
         else:
             raise KeyError('Unknown vectorizer!')
         return data

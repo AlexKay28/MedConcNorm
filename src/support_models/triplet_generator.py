@@ -6,11 +6,11 @@ from multiprocessing import Pool
 
 from scipy.spatial import distance
 from scipy.spatial.distance import cdist
+from src.configs import GENERAL, PREPROCESSING, MODELING
 
 N_RANDOM_OBS = 200
 N_POTENTIAL_EL = 3
-choose_type = 'neg_hard'
-DISTANCE_TYPE = 'euclidean'
+DISTANCE_TYPE = MODELING['distance_type']
 
 
 class TripletGenerator:
