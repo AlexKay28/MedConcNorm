@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 
 CV = 5
-N_ITER = 10
+N_ITER = 30
 RANDOM_SEED = 32
 
 
@@ -30,9 +30,9 @@ class SVC_model:
             self.metric_learner.fit(X, y)
 
         parameters = {
-            'base_estimator__kernel': ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed'],
-            'base_estimator__degree': list(range(1, 10)),
-            'base_estimator__gamma': ['scale', 'auto'],
+            'base_estimator__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+            'base_estimator__degree': list(range(2, 7)),
+            'base_estimator__gamma': ['scale'],
             'base_estimator__probability': [True]
             }
 
@@ -60,3 +60,6 @@ class SVC_model:
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
+
+    def get_params(self):
+        return self.model.get_params()

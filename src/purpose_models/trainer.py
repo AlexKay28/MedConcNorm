@@ -11,6 +11,8 @@ from sklearn.neighbors import NearestNeighbors
 from src.features.metrics import accuracy_top_K_pobs
 from src.configs import GENERAL, PREPROCESSING, MODELING
 from src.purpose_models.model_svc import SVC_model
+from src.purpose_models.model_knn import kNN_model
+from src.purpose_models.model_sgd import SGD_model
 from src.support_models.metric_learner import MetricLearner
 
 import mlflow
@@ -25,8 +27,8 @@ class Trainer:
 
     _models = {
         'SVC': SVC_model,
-        #'SGD': SGD_model, #TODO
-        #'kNN': kNN_model #TODO
+        'SGD': SGD_model, #TODO
+        'kNN': kNN_model
     }
 
     def __init__(self):

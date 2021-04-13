@@ -5,12 +5,12 @@ general:
 preprocessing:
 
   sentence_vectorizer:
-    - fasttext_default_100
-    - fasttext_default_300
-    - fasttext_cadec_100
-    - fasttext_cadec_300
-    # - fasttext_facebook
-    - bert-base-uncased
+    #- fasttext_default_100
+    #- fasttext_default_300
+    # - fasttext_cadec_100
+    # - fasttext_cadec_300
+    #- fasttext_facebook
+    #- bert-base-uncased
     # - bert-PubMed
     # - bertweet-base
     - encoder
@@ -26,7 +26,7 @@ preprocessing:
       - 7
 
   use_facebook:
-    #- True
+    - True
     - False
 
   sentence_vec:
@@ -36,13 +36,13 @@ preprocessing:
 
 modeling:
   metric_learner_name:
-    - NCA
+    #- NCA
     #- LMNN
-    - LFDA
+    #- LFDA
     - siamese
   use_metric_learning:
     - True
-    - False
+    #- False
 
   siamese_params:
     batch_size:
@@ -50,26 +50,26 @@ modeling:
       - 256
     lr:
       - 0.001
-      - 0.005
+      - 0.003
     epochs:
-      - 5
-      - 20
-      - 50
+      - 70
+      - 100
+      - 150
     steps_per_epoch:
-      - 20
       - 50
+      - 20
+      - 100
     alpha:
-      - 0.2
       - 0.6
       - 1.0
 
-
   distance_type:
-    - euclidean
-    - cosine
+    #- euclidean
+    #- cosine
     - minkowski
     - chebyshev
-    - cityblock
 
   model_name:
     - SVC
+    - kNN
+    - SGD
