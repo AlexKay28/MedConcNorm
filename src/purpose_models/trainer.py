@@ -27,7 +27,7 @@ class Trainer:
 
     _models = {
         'SVC': SVC_model,
-        'SGD': SGD_model, #TODO
+        'SGD': SGD_model,
         'kNN': kNN_model
     }
 

@@ -49,7 +49,7 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
 
     # PREPARE TRAIN SETS
     print(f"Work with {name_train} ", end='.')
-    train = pd.read_csv(corpus_train).iloc[:150]
+    train = pd.read_csv(corpus_train)
     print(train.shape)
 
     with mlflow.start_run(run_name=RUN_NAME) as run:
@@ -59,23 +59,22 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
             train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
             train = train.dropna()
             X_train, y_train = train['term_vec'], train['code']
-            X_train = pd.DataFrame([pd.Series(x) for x in X_train])
-            y_train = y_train.progress_apply(lambda x: int(meddra_labels[x]))
+            X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
+            y_train = y_train.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
 
             # FIT MODEL
             print('Fit model ')
             trainer = Trainer()
-            print(X_train.shape, y_train.shape)
             trainer.train_model(X_train, y_train)
 
             # PREPARE TEST SETS
             mlflow.set_tag("mlflow.note.content","<my_note_here>")
-            test = pd.read_csv(corpus_test).iloc[:150]
+            test = pd.read_csv(corpus_test)
             test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
             test = test.dropna()
             X_test, y_test = test['term_vec'], test['code']
-            X_test = pd.DataFrame([pd.Series(x) for x in X_test])
-            y_test = y_test.progress_apply(lambda x: int(meddra_labels[x]))
+            X_test = pd.DataFrame([pd.Series(x) for x in X_test]).to_numpy()
+            y_test = y_test.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
 
             # MLFLOW LOG PARAMS
             mlflow.log_param('train corpus', name_train)
@@ -125,24 +124,26 @@ def main():
     create_random_configuration(AVAILABLE_CONFIGURATIONS)
     sv = SentenceVectorizer()
     path = 'data/interim/'
-    for name_train in os.listdir(path):
-        if name_train not in ['smm4h17', 'smm4h21', 'psytar', 'cadec']:
+    for name_folder_train in os.listdir(path):
+        if name_folder_train not in ['smm4h17', 'smm4h21', 'psytar', 'cadec']:
             continue
         # PREPARE TRAIN SETS
-        folder = os.path.join(path, name_train)
+        folder = os.path.join(path, name_folder_train)
         corpus_train = folder + '/train.csv'
-        for name_test in os.listdir(path):
-            if name_test not in ['smm4h17', 'smm4h21', 'psytar', 'cadec'] or name_test!=name_train:
+        for name_folder_test in os.listdir(path):
+            if name_folder_test not in ['smm4h17', 'smm4h21', 'psytar', 'cadec'] \
+                                       or name_folder_test!=name_folder_train:
                 continue
             # PREPARE TEST SETS
-            folder = os.path.join(path, name_test)
+            folder = os.path.join(path, name_folder_test)
             corpus_test = folder + '/test.csv'
             run_pipe(
                 sv, meddra_labels,
-                name_train, corpus_train,
-                name_test, corpus_test
+                name_folder_train, corpus_train,
+                name_folder_test, corpus_test
             )
             break
+        break
     delete_process_configuration_file()
     print('DONE')
 

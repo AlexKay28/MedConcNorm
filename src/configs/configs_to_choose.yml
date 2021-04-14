@@ -6,10 +6,10 @@ preprocessing:
 
   sentence_vectorizer:
     #- fasttext_default_100
-    #- fasttext_default_300
+    - fasttext_default_300
     # - fasttext_cadec_100
     # - fasttext_cadec_300
-    #- fasttext_facebook
+    - fasttext_facebook
     #- bert-base-uncased
     # - bert-PubMed
     # - bertweet-base
@@ -36,13 +36,13 @@ preprocessing:
 
 modeling:
   metric_learner_name:
-    #- NCA
+    - NCA
     #- LMNN
     #- LFDA
     - siamese
   use_metric_learning:
     - True
-    #- False
+    - False
 
   siamese_params:
     batch_size:
@@ -50,15 +50,15 @@ modeling:
       - 256
     lr:
       - 0.001
-      - 0.003
     epochs:
+      #- 30
       - 70
       - 100
       - 150
     steps_per_epoch:
-      - 50
+      #- 50
       - 20
-      - 100
+      #- 100
     alpha:
       - 0.6
       - 1.0
