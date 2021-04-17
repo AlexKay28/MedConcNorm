@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from gensim.utils import lemmatize
 
 import nltk
 from nltk.corpus import stopwords
@@ -25,7 +25,8 @@ class tokenizer_gensim:
         pass
 
     def tokenize(self, text):
-        return list(tokenize(sent, lower=True))
+        return [wd.split('/')[0] for wd in lemmatize(text)]
+        #return list(tokenize(sent, lower=True))
 
 class Tokenizer:
 

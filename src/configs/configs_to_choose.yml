@@ -6,7 +6,7 @@ preprocessing:
 
   sentence_vectorizer:
     #- fasttext_default_100
-    - fasttext_default_300
+    # - fasttext_default_300
     # - fasttext_cadec_100
     # - fasttext_cadec_300
     - fasttext_facebook
@@ -27,7 +27,7 @@ preprocessing:
 
   use_facebook:
     - True
-    - False
+    #- False
 
   sentence_vec:
     - 50
@@ -51,23 +51,28 @@ modeling:
     lr:
       - 0.001
     epochs:
-      #- 30
+      - 30
       - 70
-      - 100
-      - 150
+      #- 100
+      #- 150
+      #- 200
+      #- 250
     steps_per_epoch:
-      #- 50
+      - 50
+      - 35
       - 20
+      #- 10
       #- 100
     alpha:
       - 0.6
       - 1.0
+      - 1.2
 
   distance_type:
     #- euclidean
     #- cosine
     - minkowski
-    - chebyshev
+    #- chebyshev
 
   model_name:
     - SVC

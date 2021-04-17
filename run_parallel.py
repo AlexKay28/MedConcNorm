@@ -21,7 +21,7 @@ def main():
     n_jobs = args.n_jobs
     # creat runs stack
     commands = []
-    for run in range(120):
+    for run in range(50):
         commands.append([
             f"python3",
             f"run.py",

@@ -7,8 +7,8 @@ from sklearn.model_selection import train_test_split
 from src.data.class_balancing import class_sampler
 from src.support_models.triplet_generator import TripletGenerator
 from src.support_models.loss_functions import triplet_loss, identity_loss
-from src.support_models.base_model import base_model
-from src.support_models.siamese_model_architecture import siamese_model
+from src.support_models.base_model import base_model, base_model_lstm
+from src.support_models.siamese_model_architecture import siamese_model, siamese_model_lstm
 
 from src.configs import GENERAL, PREPROCESSING, MODELING
 
@@ -39,12 +39,22 @@ class SiameseMetricLearner:
             learning_rate=LR
             )
 
+        early_stopping_callback = EarlyStopping(
+            monitor="val_loss",
+            min_delta=0,
+            patience=10,
+            verbose=1,
+            mode="auto",
+            baseline=None,
+            restore_best_weights=False,
+        )
         history = self.learner.fit_generator(train_generator,
                                              epochs=epochs,
                                              verbose=1,
                                              workers=EPOCHS,
                                              use_multiprocessing=True,
                                              steps_per_epoch=STEPS_PER_EPOCH,
+                                             callbacks=[early_stopping_callback]
                                          )
         del self.learner
         del tgen

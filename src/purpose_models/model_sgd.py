@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 
 CV = 5
-N_ITER = 30
+N_ITER = 100
 RANDOM_SEED = 32
 
 

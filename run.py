@@ -47,16 +47,27 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
     # initalize particular vectorizer method
     print(f"vectorizer: {VECTORIZER_NAME}")
 
-    # PREPARE TRAIN SETS
-    print(f"Work with {name_train} ", end='.')
-    train = pd.read_csv(corpus_train)
-    print(train.shape)
-
     with mlflow.start_run(run_name=RUN_NAME) as run:
+        # PREPROCESSING, AVAILABLE_CONFIGURATIONS, MODELING
+        mlflow.log_param('GENERAL', GENERAL)
+        mlflow.log_param('PREPROCESSING', PREPROCESSING)
+        mlflow.log_param('MODELING', MODELING)
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
-            print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
-            train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+
+            train_file = f'data/processed/train_ex_{name_train}_{VECTORIZER_NAME}.pkl'
+            print(train_file)
+            if f"train_ex_{name_train}_{VECTORIZER_NAME}.pkl" in os.listdir('data/processed'):
+                print('Use cached train data')
+                train = pd.read_pickle(train_file)
+            else:
+                # PREPARE TRAIN SETS
+                print(f"Work with {name_train} ", end='.')
+                train = pd.read_csv(corpus_train)
+                print(train.shape)
+                print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
+                train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+                train.to_pickle(train_file)
             train = train.dropna()
             X_train, y_train = train['term_vec'], train['code']
             X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
@@ -69,8 +80,14 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
 
             # PREPARE TEST SETS
             mlflow.set_tag("mlflow.note.content","<my_note_here>")
-            test = pd.read_csv(corpus_test)
-            test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
+            test_file = f'data/processed/test_ex_{name_train}_{VECTORIZER_NAME}.pkl'
+            if f"test_ex_{name_train}_{VECTORIZER_NAME}.pkl" in os.listdir('data/processed'):
+                print('Use cached test data')
+                test = pd.read_pickle(test_file)
+            else:
+                test = pd.read_csv(corpus_test)
+                test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
+                test.to_pickle(test_file)
             test = test.dropna()
             X_test, y_test = test['term_vec'], test['code']
             X_test = pd.DataFrame([pd.Series(x) for x in X_test]).to_numpy()
@@ -90,8 +107,22 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 print(f'\ttest with {name_test} acc@{k}:', score)
                 mlflow.log_metric(f"accuracy_{k}", score)
             mlflow.set_tag("exp_name", 'first')
-            #mlflow.sklearn.log_model(trainer.model, "model")
             mlflow.log_artifact(log_file)
+
+            acc1 = trainer.accuracy(X_test, y_test, k=1)
+            if any([
+                name_train=='smm4h17' and acc1 >= 65.0,
+                name_train=='smm4h21' and acc1 >= 37.0,
+                name_train=='psytar' and acc1 >= 74.0,
+                name_train=='cadec' and acc1 >= 72.0,
+            ]):
+                mlflow.set_tag("QUALITY", 'HIGH')
+                mlflow.sklearn.log_model(trainer.model, f"model_for_{name_train}")
+                mlflow.log_artifact(train_file)
+                mlflow.log_artifact(test_file)
+            else:
+                mlflow.set_tag("QUALITY", 'LOW')
+
         except Exception as e:
             logging.error(f"\nERROR FOR RUN: {run.info.run_id}")
             logging.error(e, exc_info=True)
@@ -129,7 +160,7 @@ def main():
             continue
         # PREPARE TRAIN SETS
         folder = os.path.join(path, name_folder_train)
-        corpus_train = folder + '/train.csv'
+        corpus_train = folder + '/train_ex.csv'
         for name_folder_test in os.listdir(path):
             if name_folder_test not in ['smm4h17', 'smm4h21', 'psytar', 'cadec'] \
                                        or name_folder_test!=name_folder_train:
@@ -137,13 +168,14 @@ def main():
             # PREPARE TEST SETS
             folder = os.path.join(path, name_folder_test)
             corpus_test = folder + '/test.csv'
+
+            print(name_folder_train, name_folder_test)
             run_pipe(
                 sv, meddra_labels,
                 name_folder_train, corpus_train,
                 name_folder_test, corpus_test
             )
-            break
-        break
+
     delete_process_configuration_file()
     print('DONE')
 
