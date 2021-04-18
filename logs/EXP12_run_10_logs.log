@@ -1,0 +1,96 @@
+ERROR:root:
+ERROR FOR RUN: eaf3d3f1f8b8470ea7d9d7a6f9fcabf1
+ERROR:root:Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+Traceback (most recent call last):
+  File "run.py", line 59, in run_pipe
+    train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 171, in vectorize
+    data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in vectorize_sent_ft
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 4213, in apply
+    mapped = lib.map_infer(values, f, convert=convert_dtype)
+  File "pandas/_libs/lib.pyx", line 2403, in pandas._libs.lib.map_infer
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in <lambda>
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 84, in sent2vec
+    sent = self.word_tokenizer.tokenize(sent)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 42, in tokenize
+    return self.tokenizer.tokenize(text)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 28, in tokenize
+    return [wd.split('/')[0] for wd in lemmatize(text)]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/gensim/utils.py", line 1692, in lemmatize
+    "Pattern library is not installed. Pattern library is needed in order to use lemmatize function"
+ImportError: Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+ERROR:root:
+ERROR FOR RUN: f52a14b2bf4e475996d8ed862da409df
+ERROR:root:Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+Traceback (most recent call last):
+  File "run.py", line 59, in run_pipe
+    train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 171, in vectorize
+    data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in vectorize_sent_ft
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 4213, in apply
+    mapped = lib.map_infer(values, f, convert=convert_dtype)
+  File "pandas/_libs/lib.pyx", line 2403, in pandas._libs.lib.map_infer
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in <lambda>
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 84, in sent2vec
+    sent = self.word_tokenizer.tokenize(sent)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 42, in tokenize
+    return self.tokenizer.tokenize(text)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 28, in tokenize
+    return [wd.split('/')[0] for wd in lemmatize(text)]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/gensim/utils.py", line 1692, in lemmatize
+    "Pattern library is not installed. Pattern library is needed in order to use lemmatize function"
+ImportError: Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+ERROR:root:
+ERROR FOR RUN: d4c1706dd4a94798ac861986b88b41c8
+ERROR:root:Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+Traceback (most recent call last):
+  File "run.py", line 59, in run_pipe
+    train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 171, in vectorize
+    data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in vectorize_sent_ft
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 4213, in apply
+    mapped = lib.map_infer(values, f, convert=convert_dtype)
+  File "pandas/_libs/lib.pyx", line 2403, in pandas._libs.lib.map_infer
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in <lambda>
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 84, in sent2vec
+    sent = self.word_tokenizer.tokenize(sent)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 42, in tokenize
+    return self.tokenizer.tokenize(text)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 28, in tokenize
+    return [wd.split('/')[0] for wd in lemmatize(text)]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/gensim/utils.py", line 1692, in lemmatize
+    "Pattern library is not installed. Pattern library is needed in order to use lemmatize function"
+ImportError: Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+ERROR:root:
+ERROR FOR RUN: 591f7f0822fb4710b623f9de01113544
+ERROR:root:Pattern library is not installed. Pattern library is needed in order to use lemmatize function
+Traceback (most recent call last):
+  File "run.py", line 59, in run_pipe
+    train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 171, in vectorize
+    data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in vectorize_sent_ft
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 4213, in apply
+    mapped = lib.map_infer(values, f, convert=convert_dtype)
+  File "pandas/_libs/lib.pyx", line 2403, in pandas._libs.lib.map_infer
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 88, in <lambda>
+    data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/sentence_vectorizer.py", line 84, in sent2vec
+    sent = self.word_tokenizer.tokenize(sent)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 42, in tokenize
+    return self.tokenizer.tokenize(text)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/data/tokenizer.py", line 28, in tokenize
+    return [wd.split('/')[0] for wd in lemmatize(text)]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/gensim/utils.py", line 1692, in lemmatize
+    "Pattern library is not installed. Pattern library is needed in order to use lemmatize function"
+ImportError: Pattern library is not installed. Pattern library is needed in order to use lemmatize function

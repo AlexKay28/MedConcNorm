@@ -1,0 +1,158 @@
+ERROR:root:
+ERROR FOR RUN: 7be02a296fff4d3f9b87d434288b4b78
+ERROR:root:Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+Traceback (most recent call last):
+  File "run.py", line 69, in run_pipe
+    trainer.train_model(X_train, y_train)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/trainer.py", line 52, in train_model
+    self.model.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 59, in fit
+    self.model = self.get_best_model_configuration(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 30, in get_best_model_configuration
+    self.metric_learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/metric_learner.py", line 20, in fit
+    self.learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/siamese_metric_learner.py", line 47, in fit
+    steps_per_epoch=STEPS_PER_EPOCH,
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1861, in fit_generator
+    initial_epoch=initial_epoch)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1064, in fit
+    steps_per_execution=self._steps_per_execution)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 1112, in __init__
+    model=model)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 779, in __init__
+    peek, x = self._peek_and_restore(x)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 836, in _peek_and_restore
+    peek = next(x)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 96, in generate_triplets
+    a, p, n = self.get_triplet(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 80, in get_triplet
+    anchor_x_idx = np.random.choice(X[y==anchor_y].shape[0])
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2897, in __getitem__
+    return self._getitem_bool_array(key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2949, in _getitem_bool_array
+    key = check_bool_indexer(self.index, key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 2183, in check_bool_indexer
+    "Unalignable boolean Series provided as "
+pandas.core.indexing.IndexingError: Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+ERROR:root:
+ERROR FOR RUN: afe36a798fec43209129c4346fd0c12c
+ERROR:root:Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+Traceback (most recent call last):
+  File "run.py", line 69, in run_pipe
+    trainer.train_model(X_train, y_train)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/trainer.py", line 52, in train_model
+    self.model.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 59, in fit
+    self.model = self.get_best_model_configuration(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 30, in get_best_model_configuration
+    self.metric_learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/metric_learner.py", line 20, in fit
+    self.learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/siamese_metric_learner.py", line 47, in fit
+    steps_per_epoch=STEPS_PER_EPOCH,
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1861, in fit_generator
+    initial_epoch=initial_epoch)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1064, in fit
+    steps_per_execution=self._steps_per_execution)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 1112, in __init__
+    model=model)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 779, in __init__
+    peek, x = self._peek_and_restore(x)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 836, in _peek_and_restore
+    peek = next(x)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 96, in generate_triplets
+    a, p, n = self.get_triplet(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 80, in get_triplet
+    anchor_x_idx = np.random.choice(X[y==anchor_y].shape[0])
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2897, in __getitem__
+    return self._getitem_bool_array(key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2949, in _getitem_bool_array
+    key = check_bool_indexer(self.index, key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 2183, in check_bool_indexer
+    "Unalignable boolean Series provided as "
+pandas.core.indexing.IndexingError: Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+ERROR:root:
+ERROR FOR RUN: 46b17bbb7629492aaa9a1aef8b6ad423
+ERROR:root:Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+Traceback (most recent call last):
+  File "run.py", line 69, in run_pipe
+    trainer.train_model(X_train, y_train)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/trainer.py", line 52, in train_model
+    self.model.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 59, in fit
+    self.model = self.get_best_model_configuration(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 30, in get_best_model_configuration
+    self.metric_learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/metric_learner.py", line 20, in fit
+    self.learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/siamese_metric_learner.py", line 47, in fit
+    steps_per_epoch=STEPS_PER_EPOCH,
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1861, in fit_generator
+    initial_epoch=initial_epoch)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1064, in fit
+    steps_per_execution=self._steps_per_execution)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 1112, in __init__
+    model=model)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 779, in __init__
+    peek, x = self._peek_and_restore(x)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 836, in _peek_and_restore
+    peek = next(x)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 96, in generate_triplets
+    a, p, n = self.get_triplet(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 80, in get_triplet
+    anchor_x_idx = np.random.choice(X[y==anchor_y].shape[0])
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2897, in __getitem__
+    return self._getitem_bool_array(key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/frame.py", line 2949, in _getitem_bool_array
+    key = check_bool_indexer(self.index, key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 2183, in check_bool_indexer
+    "Unalignable boolean Series provided as "
+pandas.core.indexing.IndexingError: Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+ERROR:root:
+ERROR FOR RUN: 1c28edc5e70742d5a172397ea61207a5
+ERROR:root:"Passing list-likes to .loc or [] with any missing labels is no longer supported. The following labels were missing: Int64Index([231,  86,  70,  15, 285,\n            ...\n            201, 134, 211, 110, 147],\n           dtype='int64', length=184). See https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#deprecate-loc-reindex-listlike"
+Traceback (most recent call last):
+  File "run.py", line 69, in run_pipe
+    trainer.train_model(X_train, y_train)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/trainer.py", line 52, in train_model
+    self.model.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 59, in fit
+    self.model = self.get_best_model_configuration(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 30, in get_best_model_configuration
+    self.metric_learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/metric_learner.py", line 20, in fit
+    self.learner.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/siamese_metric_learner.py", line 47, in fit
+    steps_per_epoch=STEPS_PER_EPOCH,
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1861, in fit_generator
+    initial_epoch=initial_epoch)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/training.py", line 1064, in fit
+    steps_per_execution=self._steps_per_execution)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 1112, in __init__
+    model=model)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 779, in __init__
+    peek, x = self._peek_and_restore(x)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/data_adapter.py", line 836, in _peek_and_restore
+    peek = next(x)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 96, in generate_triplets
+    a, p, n = self.get_triplet(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 85, in get_triplet
+    pos_x = self.choose_pos_x_hard(X, y, anchor_x, anchor_y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/support_models/triplet_generator.py", line 31, in choose_pos_x_hard
+    X, y = X[indices], y[indices]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 906, in __getitem__
+    return self._get_with(key)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/series.py", line 941, in _get_with
+    return self.loc[key]
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 879, in __getitem__
+    return self._getitem_axis(maybe_callable, axis=axis)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 1099, in _getitem_axis
+    return self._getitem_iterable(key, axis=axis)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 1037, in _getitem_iterable
+    keyarr, indexer = self._get_listlike_indexer(key, axis, raise_missing=False)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 1254, in _get_listlike_indexer
+    self._validate_read_indexer(keyarr, indexer, axis, raise_missing=raise_missing)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/pandas/core/indexing.py", line 1316, in _validate_read_indexer
+    "Passing list-likes to .loc or [] with any missing labels "
+KeyError: "Passing list-likes to .loc or [] with any missing labels is no longer supported. The following labels were missing: Int64Index([231,  86,  70,  15, 285,\n            ...\n            201, 134, 211, 110, 147],\n           dtype='int64', length=184). See https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#deprecate-loc-reindex-listlike"

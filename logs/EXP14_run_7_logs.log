@@ -1,0 +1,72 @@
+ERROR:concurrent.futures:exception calling callback for <Future at 0x7f403228e1d0 state=finished raised TerminatedWorkerError>
+Traceback (most recent call last):
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/_base.py", line 625, in _invoke_callbacks
+    callback(self)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 359, in __call__
+    self.parallel.dispatch_next()
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 792, in dispatch_next
+    if not self.dispatch_one_batch(self._original_iterator):
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 859, in dispatch_one_batch
+    self._dispatch(tasks)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 777, in _dispatch
+    job = self._backend.apply_async(batch, callback=cb)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/_parallel_backends.py", line 531, in apply_async
+    future = self._workers.submit(SafeFunction(func))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/reusable_executor.py", line 178, in submit
+    fn, *args, **kwargs)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/process_executor.py", line 1102, in submit
+    raise self._flags.broken
+joblib.externals.loky.process_executor.TerminatedWorkerError: A worker process managed by the executor was unexpectedly terminated. This could be caused by a segmentation fault while calling the function or by an excessive memory usage causing the Operating System to kill the worker.
+
+The exit codes of the workers are {SIGKILL(-9), SIGKILL(-9)}
+ERROR:root:
+ERROR FOR RUN: 88e211badd3b4cb09389c38576f7924f
+ERROR:root:A worker process managed by the executor was unexpectedly terminated. This could be caused by a segmentation fault while calling the function or by an excessive memory usage causing the Operating System to kill the worker.
+
+The exit codes of the workers are {SIGKILL(-9), SIGKILL(-9)}
+Traceback (most recent call last):
+  File "run.py", line 80, in run_pipe
+    trainer.train_model(X_train, y_train)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/trainer.py", line 52, in train_model
+    self.model.fit(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 59, in fit
+    self.model = self.get_best_model_configuration(X, y)
+  File "/home/kaigorodov/myprojects/MedConcNorm/src/purpose_models/model_svc.py", line 48, in get_best_model_configuration
+    decision.fit(X, y)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/sklearn/utils/validation.py", line 63, in inner_f
+    return f(*args, **kwargs)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/sklearn/model_selection/_search.py", line 841, in fit
+    self._run_search(evaluate_candidates)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/sklearn/model_selection/_search.py", line 1621, in _run_search
+    random_state=self.random_state))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/sklearn/model_selection/_search.py", line 809, in evaluate_candidates
+    enumerate(cv.split(X, y, groups))))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 1054, in __call__
+    self.retrieve()
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 933, in retrieve
+    self._output.extend(job.get(timeout=self.timeout))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/_parallel_backends.py", line 542, in wrap_future_result
+    return future.result(timeout=timeout)
+  File "/usr/lib64/python3.6/concurrent/futures/_base.py", line 432, in result
+    return self.__get_result()
+  File "/usr/lib64/python3.6/concurrent/futures/_base.py", line 384, in __get_result
+    raise self._exception
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/_base.py", line 625, in _invoke_callbacks
+    callback(self)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 359, in __call__
+    self.parallel.dispatch_next()
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 792, in dispatch_next
+    if not self.dispatch_one_batch(self._original_iterator):
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 859, in dispatch_one_batch
+    self._dispatch(tasks)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/parallel.py", line 777, in _dispatch
+    job = self._backend.apply_async(batch, callback=cb)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/_parallel_backends.py", line 531, in apply_async
+    future = self._workers.submit(SafeFunction(func))
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/reusable_executor.py", line 178, in submit
+    fn, *args, **kwargs)
+  File "/home/kaigorodov/.local/lib/python3.6/site-packages/joblib/externals/loky/process_executor.py", line 1102, in submit
+    raise self._flags.broken
+joblib.externals.loky.process_executor.TerminatedWorkerError: A worker process managed by the executor was unexpectedly terminated. This could be caused by a segmentation fault while calling the function or by an excessive memory usage causing the Operating System to kill the worker.
+
+The exit codes of the workers are {SIGKILL(-9), SIGKILL(-9)}

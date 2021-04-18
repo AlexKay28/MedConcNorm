@@ -30,6 +30,12 @@ from src.configs import create_random_configuration, delete_process_configuratio
 USE_MLALG = MODELING['use_metric_learning']
 MODEL_NAME = MODELING['model_name']
 VECTORIZER_NAME = PREPROCESSING['sentence_vectorizer']
+ft_model_path = PREPROCESSING['ft_model_path']
+
+if ft_model_path == "data/external/embeddings/cc.en.300.bin":
+    VECTORIZER_NAME_FILE = VECTORIZER_NAME + '_simple'
+else:
+    VECTORIZER_NAME_FILE = VECTORIZER_NAME + '_med'
 
 # create log file
 log_file = f'logs/{EXPERIMENT_NAME}_{RUN_NAME}_logs.log'
@@ -55,13 +61,16 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
 
-            train_file = f'data/processed/train_ex_{name_train}_{VECTORIZER_NAME}.pkl'
-            print(train_file)
-            if f"train_ex_{name_train}_{VECTORIZER_NAME}.pkl" in os.listdir('data/processed'):
+            train_file = f'data/processed/train_ex_{name_train}_{VECTORIZER_NAME_FILE}.pkl'
+            print("TRAIN FILE", train_file)
+            if f"train_ex_{name_train}_{VECTORIZER_NAME_FILE}.pkl" in os.listdir('data/processed'):
+                logging.critical('Use cached train data')
                 print('Use cached train data')
                 train = pd.read_pickle(train_file)
             else:
                 # PREPARE TRAIN SETS
+                logging.critical('Creating new train pkl data file')
+                print('Creating new train pkl data file')
                 print(f"Work with {name_train} ", end='.')
                 train = pd.read_csv(corpus_train)
                 print(train.shape)
@@ -73,21 +82,26 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
             X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
             y_train = y_train.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
 
-            # FIT MODEL
+            # # FIT MODEL
+            logging.critical('fitting model')
             print('Fit model ')
             trainer = Trainer()
             trainer.train_model(X_train, y_train)
 
             # PREPARE TEST SETS
             mlflow.set_tag("mlflow.note.content","<my_note_here>")
-            test_file = f'data/processed/test_ex_{name_train}_{VECTORIZER_NAME}.pkl'
-            if f"test_ex_{name_train}_{VECTORIZER_NAME}.pkl" in os.listdir('data/processed'):
+            test_file = f'data/processed/test_{name_train}_{VECTORIZER_NAME_FILE}.pkl'
+            if f"test_{name_train}_{VECTORIZER_NAME_FILE}.pkl" in os.listdir('data/processed'):
+                logging.critical('Use cached test data')
                 print('Use cached test data')
                 test = pd.read_pickle(test_file)
             else:
+                logging.critical('Creating new test pkl data file')
+                print('Creating new test pkl data file')
                 test = pd.read_csv(corpus_test)
                 test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
                 test.to_pickle(test_file)
+
             test = test.dropna()
             X_test, y_test = test['term_vec'], test['code']
             X_test = pd.DataFrame([pd.Series(x) for x in X_test]).to_numpy()
@@ -116,12 +130,12 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 name_train=='psytar' and acc1 >= 74.0,
                 name_train=='cadec' and acc1 >= 72.0,
             ]):
-                mlflow.set_tag("QUALITY", 'HIGH')
+                mlflow.set_tag("QUALITY", f'HIGH ({acc1})')
                 mlflow.sklearn.log_model(trainer.model, f"model_for_{name_train}")
                 mlflow.log_artifact(train_file)
                 mlflow.log_artifact(test_file)
             else:
-                mlflow.set_tag("QUALITY", 'LOW')
+                mlflow.set_tag("QUALITY", f'LOW ({acc1})')
 
         except Exception as e:
             logging.error(f"\nERROR FOR RUN: {run.info.run_id}")
@@ -175,7 +189,6 @@ def main():
                 name_folder_train, corpus_train,
                 name_folder_test, corpus_test
             )
-
     delete_process_configuration_file()
     print('DONE')
 

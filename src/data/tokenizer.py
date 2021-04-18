@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from gensim.utils import lemmatize
-
+import spacy
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -28,11 +28,20 @@ class tokenizer_gensim:
         return [wd.split('/')[0] for wd in lemmatize(text)]
         #return list(tokenize(sent, lower=True))
 
+class tokenizer_spacy:
+    def __init__(self):
+        self.spacy_model = spacy.load('en_core_web_sm')
+
+    def tokenize(self, text):
+        return [word.lemma_ for word in self.spacy_model(text)]
+        #return list(tokenize(sent, lower=True))
+
 class Tokenizer:
 
     _tokenizers = {
         'nltk': tokenizer_NLTK,
-        'gensim': tokenizer_gensim
+        'gensim': tokenizer_gensim,
+        'spacy': tokenizer_spacy
     }
 
     def __init__(self, tokenizer_name):

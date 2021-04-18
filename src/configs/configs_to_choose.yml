@@ -4,6 +4,11 @@ general:
 
 preprocessing:
 
+  tokenizer_name:
+    - spacy
+    #- nltk
+    #- gensim
+
   sentence_vectorizer:
     #- fasttext_default_100
     # - fasttext_default_300
@@ -13,7 +18,16 @@ preprocessing:
     #- bert-base-uncased
     # - bert-PubMed
     # - bertweet-base
-    - encoder
+    #- encoder
+
+  agg_type:
+    - avg
+    - max
+    - reduce
+
+  ft_model_path:
+    - data/external/embeddings/cc.en.300.bin
+    #- data/external/embeddings/BioWordVec_PubMed_MIMICIII_d200.bin
 
   fasttext_model:
     epochs:
@@ -36,7 +50,7 @@ preprocessing:
 
 modeling:
   metric_learner_name:
-    - NCA
+    # - NCA
     #- LMNN
     #- LFDA
     - siamese
@@ -46,27 +60,27 @@ modeling:
 
   siamese_params:
     batch_size:
-      - 128
+      #- 128
       - 256
     lr:
       - 0.001
     epochs:
       - 30
-      - 70
+      #- 70
       #- 100
       #- 150
-      #- 200
+      - 200
       #- 250
     steps_per_epoch:
       - 50
-      - 35
-      - 20
+      #- 35
+      #- 20
       #- 10
       #- 100
     alpha:
-      - 0.6
+      #- 0.6
       - 1.0
-      - 1.2
+      #- 1.2
 
   distance_type:
     #- euclidean
@@ -75,6 +89,6 @@ modeling:
     #- chebyshev
 
   model_name:
-    - SVC
+    #- SVC
     - kNN
-    - SGD
+    #- SGD

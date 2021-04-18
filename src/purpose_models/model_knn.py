@@ -10,6 +10,9 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 
+import warnings
+warnings.filterwarnings("ignore")
+
 CV = 5
 N_ITER = 100
 RANDOM_SEED = 32
@@ -18,6 +21,7 @@ RANDOM_SEED = 32
 class kNN_model:
 
     def __init__(self):
+        self._best_model_params = None
         self.model = CalibratedClassifierCV(KNeighborsClassifier())
         self.metric_learner = None
 
@@ -31,7 +35,7 @@ class kNN_model:
 
         parameters = {
             'base_estimator__weights': ['uniform', 'distance'],
-            'base_estimator__n_neighbors': list(range(2, 7)),
+            'base_estimator__n_neighbors': list(range(1, 7)),
             'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
             'base_estimator__p': [1, 2, 3, 4]
             }
@@ -40,7 +44,7 @@ class kNN_model:
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
-                                      n_jobs=5,
+                                      n_jobs=10,
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
@@ -52,6 +56,9 @@ class kNN_model:
                 #('svc', estimator)
                 ('knn', decision)
             ])
+            self._best_model_params = decision['knn'].get_params()
+        else:
+            self._best_model_params = decision.get_params()
         return decision
 
     def fit(self, X, y):
@@ -62,4 +69,4 @@ class kNN_model:
         return self.model.predict_proba(X)
 
     def get_params(self):
-        return self.model.get_params()
+        return self._best_model_params

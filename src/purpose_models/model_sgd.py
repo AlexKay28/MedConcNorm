@@ -10,6 +10,9 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.calibration import CalibratedClassifierCV
 
+import warnings
+warnings.filterwarnings("ignore")
+
 CV = 5
 N_ITER = 100
 RANDOM_SEED = 32
@@ -39,7 +42,7 @@ class SGD_model:
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
-                                      n_jobs=5,
+                                      n_jobs=10,
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
@@ -51,6 +54,9 @@ class SGD_model:
                 #('svc', estimator)
                 ('sgd', decision)
             ])
+            self._best_model_params = decision['sgd'].get_params()
+        else:
+            self._best_model_params = decision.get_params()
         return decision
 
     def fit(self, X, y):
@@ -61,4 +67,4 @@ class SGD_model:
         return self.model.predict_proba(X)
 
     def get_params(self):
-        return self.model.get_params()
+        return self._best_model_params

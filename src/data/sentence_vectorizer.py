@@ -2,6 +2,7 @@ import re
 import numpy as np
 import pandas as pd
 import pickle
+from functools import reduce
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -25,10 +26,11 @@ VEC_SIZE = PREPROCESSING['sentence_vec']
 USE_FACEBOOK = PREPROCESSING['use_facebook']
 FT_EPOCHS = PREPROCESSING['fasttext_model']['epochs']
 FT_WINDOW = PREPROCESSING['fasttext_model']['window']
+AGG_TYPE = PREPROCESSING['agg_type']
+ft_model_path = PREPROCESSING['ft_model_path']
+TOKENIZER_NAME = PREPROCESSING['tokenizer_name']
 
-TOKENIZER_NAME = 'nltk'
-
-ft_model_path = 'data/external/embeddings/cc.en.300.bin'
+#ft_model_path = 'data/external/embeddings/cc.en.300.bin'
 
 
 class SentenceVectorizer:
@@ -73,6 +75,7 @@ class SentenceVectorizer:
     def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE,
                                 corpus='default', use_facebook_ft=False):
         if use_facebook_ft:
+            print('LOADING MODEL')
             model = FastText.load_fasttext_format(ft_model_path)
         else:
             model = self.pretrain_ft__model(corpus=corpus, size=size)
@@ -81,11 +84,16 @@ class SentenceVectorizer:
             def aggregate(vecs, agg_type):
                 if agg_type == 'avg':
                     return vecs.mean(axis=0)
+                elif agg_type == 'max':
+                    return vecs.max(axis=0)
+                elif agg_type == 'reduce':
+                    sent = reduce(lambda v1, v2: np.cross(v1, v2), vecs)
+                    return sent/abs(sent).max()
             sent = self.word_tokenizer.tokenize(sent)
             sent = np.array([model.wv[word] for word in sent])
-            sent_vec = aggregate(sent, 'avg')
+            sent_vec = aggregate(sent, AGG_TYPE)
             return sent_vec
-        data[feat_col+'_vec'] = data[feat_col].apply(lambda x: sent2vec(x))
+        data[feat_col+'_vec'] = data[feat_col].progress_apply(lambda x: sent2vec(x) if len(x)>1 else x)
         return data
 
     def vectorize_sent_bert(self, data, text_column="text"):
