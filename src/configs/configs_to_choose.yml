@@ -23,7 +23,7 @@ preprocessing:
   agg_type:
     - avg
     - max
-    - reduce
+    #- reduce
 
   ft_model_path:
     - data/external/embeddings/cc.en.300.bin
@@ -55,7 +55,7 @@ modeling:
     #- LFDA
     - siamese
   use_metric_learning:
-    - True
+    #- True
     - False
 
   siamese_params:

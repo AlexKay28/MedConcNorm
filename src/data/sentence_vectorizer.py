@@ -87,6 +87,7 @@ class SentenceVectorizer:
                 elif agg_type == 'max':
                     return vecs.max(axis=0)
                 elif agg_type == 'reduce':
+                    print(vecs)
                     sent = reduce(lambda v1, v2: np.cross(v1, v2), vecs)
                     return sent/abs(sent).max()
             sent = self.word_tokenizer.tokenize(sent)

@@ -51,7 +51,7 @@ class SiameseMetricLearner:
         history = self.learner.fit_generator(train_generator,
                                              epochs=epochs,
                                              verbose=1,
-                                             workers=EPOCHS,
+                                             workers=15,
                                              use_multiprocessing=True,
                                              steps_per_epoch=STEPS_PER_EPOCH,
                                              callbacks=[early_stopping_callback]
