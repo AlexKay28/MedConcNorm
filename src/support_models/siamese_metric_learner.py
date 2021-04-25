@@ -40,18 +40,18 @@ class SiameseMetricLearner:
             )
 
         early_stopping_callback = EarlyStopping(
-            monitor="val_loss",
+            monitor="loss",
             min_delta=0,
-            patience=10,
+            patience=20,
             verbose=1,
             mode="auto",
             baseline=None,
-            restore_best_weights=False,
+            restore_best_weights=True,
         )
         history = self.learner.fit_generator(train_generator,
                                              epochs=epochs,
                                              verbose=1,
-                                             workers=15,
+                                             workers=25,
                                              use_multiprocessing=True,
                                              steps_per_epoch=STEPS_PER_EPOCH,
                                              callbacks=[early_stopping_callback]

@@ -3,7 +3,8 @@ import numpy as np
 from scipy.stats import randint as sp_randInt
 from scipy.stats import uniform as sp_randFloat
 
-from sklearn.neighbors import KNeighborsClassifier
+from lightgbm import LGBMClassifier
+
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import RandomizedSearchCV
@@ -18,27 +19,24 @@ N_ITER = 150
 RANDOM_SEED = 32
 
 
-class kNN_model:
+class LGBM_model:
 
     def __init__(self):
         self._best_model_params = None
-        self.model = CalibratedClassifierCV(KNeighborsClassifier())
+        self.model = LGBMClassifier(random_state=RANDOM_SEED, silent=True,)
         self.metric_learner = None
 
     def add_metric_learner(self, metric_learner):
         self.metric_learner = metric_learner
 
     def get_best_model_configuration(self, X, y):
-        estimator = CalibratedClassifierCV(KNeighborsClassifier())
+        estimator = LGBMClassifier(random_state=RANDOM_SEED, silent=True,)
         if self.metric_learner:
             self.metric_learner.fit(X, y)
 
-        parameters = {
-            'base_estimator__weights': ['uniform', 'distance'],
-            'base_estimator__n_neighbors': list(range(1, 15)),
-            'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
-            'base_estimator__p': [1, 2, 3, 4]
-            }
+        parameters = {'max_depth': sp_randInt(2, 8),
+                      'learning_rate': sp_randFloat(),
+                      'num_leaves': sp_randInt(2, 15)}
 
         decision = RandomizedSearchCV(estimator=estimator,
                                       param_distributions=parameters,
@@ -54,9 +52,9 @@ class kNN_model:
             decision = Pipeline([
                 ('metric_learner', self.metric_learner),
                 #('svc', estimator)
-                ('knn', decision)
+                ('lgbm', decision)
             ])
-            self._best_model_params = decision['knn'].best_params_
+            self._best_model_params = decision['lgbm'].best_params_
         else:
             self._best_model_params = decision.best_params_
         return decision

@@ -33,8 +33,10 @@ class tokenizer_spacy:
         self.spacy_model = spacy.load('en_core_web_sm')
 
     def tokenize(self, text):
+        text_tokens = word_tokenize(text)
+        tokens_without_sw = [word for word in text_tokens if not word in stopwords.words()]
+        text = ' '.join(tokens_without_sw)
         return [word.lemma_.lower() for word in self.spacy_model(text)]
-        #return list(tokenize(sent, lower=True))
 
 class Tokenizer:
 

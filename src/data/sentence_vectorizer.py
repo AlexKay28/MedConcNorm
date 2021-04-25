@@ -14,6 +14,7 @@ from tensorflow.keras.preprocessing import sequence
 from sent2vec.vectorizer import Vectorizer
 from transformers import BertTokenizer, TFBertModel
 
+from gensim.models import KeyedVectors
 from gensim.models import FastText
 from gensim.test.utils import common_texts
 from gensim.utils import tokenize
@@ -23,7 +24,6 @@ from src.data.tokenizer import Tokenizer
 
 N_JOBS = GENERAL['n_jobs']
 VEC_SIZE = PREPROCESSING['sentence_vec']
-USE_FACEBOOK = PREPROCESSING['use_facebook']
 FT_EPOCHS = PREPROCESSING['fasttext_model']['epochs']
 FT_WINDOW = PREPROCESSING['fasttext_model']['window']
 AGG_TYPE = PREPROCESSING['agg_type']
@@ -42,12 +42,12 @@ class SentenceVectorizer:
         'bert-base-uncased',
         'bert-PubMed',
         "bertweet-base"
-        #'sent2vec'
+        'word2vec'
     ]
 
-    def __init__(self, n_jobs=5):
+    def __init__(self, tokenizer_name=TOKENIZER_NAME, n_jobs=5):
         self.n_jobs = n_jobs
-        self.word_tokenizer = Tokenizer(TOKENIZER_NAME)
+        self.word_tokenizer = Tokenizer(tokenizer_name)
 
 
     def vectorize_sent_sent2vec(self, data, feat_col='term'):
@@ -73,12 +73,9 @@ class SentenceVectorizer:
         return model
 
     def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE,
-                                corpus='default', use_facebook_ft=False):
-        if use_facebook_ft:
-            print('LOADING MODEL')
-            model = FastText.load_fasttext_format(ft_model_path)
-        else:
-            model = self.pretrain_ft__model(corpus=corpus, size=size)
+                                corpus='default'):
+        print('LOADING MODEL')
+        model = FastText.load_fasttext_format(ft_model_path)
 
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
@@ -86,12 +83,28 @@ class SentenceVectorizer:
                     return vecs.mean(axis=0)
                 elif agg_type == 'max':
                     return vecs.max(axis=0)
-                elif agg_type == 'reduce':
-                    print(vecs)
-                    sent = reduce(lambda v1, v2: np.cross(v1, v2), vecs)
-                    return sent/abs(sent).max()
+
             sent = self.word_tokenizer.tokenize(sent)
             sent = np.array([model.wv[word] for word in sent])
+            sent_vec = aggregate(sent, AGG_TYPE)
+            return sent_vec
+        data[feat_col+'_vec'] = data[feat_col].progress_apply(lambda x: sent2vec(x) if len(x)>1 else x)
+        return data
+
+    def vectorize_sent_w2v(self, data, feat_col='term'):
+        print('LOADING MODEL')
+        model = KeyedVectors.load_word2vec_format(
+            'data/external/embeddings/pubmed2018_w2v_200D/pubmed2018_w2v_200D.bin', binary=True)
+
+        def sent2vec(sent, model=model):
+            def aggregate(vecs, agg_type):
+                if agg_type == 'avg':
+                    return vecs.mean(axis=0)
+                elif agg_type == 'max':
+                    return vecs.max(axis=0)
+
+            sent = self.word_tokenizer.tokenize(sent)
+            sent = np.array([model[word] for word in sent if word in model.vocab])
             sent_vec = aggregate(sent, AGG_TYPE)
             return sent_vec
         data[feat_col+'_vec'] = data[feat_col].progress_apply(lambda x: sent2vec(x) if len(x)>1 else x)
@@ -166,6 +179,15 @@ class SentenceVectorizer:
             lambda seq: encoder.predict([seq])[0])
         return data
 
+    def vectorize_tfidf(self, data, feat_col='term'):
+        with open('models/tfidfvectorizer/vectorizer.pickle', 'rb') as tok:
+            vectorizer = pickle.load(tok)
+        lemmatized = data[feat_col].apply(
+            lambda text: ' '.join(self.word_tokenizer.tokenize(text)))
+        data[feat_col+'_vec'] = vectorizer.transform(lemmatized).todense().tolist()
+        return data
+
+
     def vectorize(self, data, vectorizer_name='fasttext'):
 
         if vectorizer_name=='fasttext_default_100':
@@ -188,6 +210,10 @@ class SentenceVectorizer:
             data = self.vectorize_sent_sent2vec(data)
         elif vectorizer_name=='encoder':
             data = self.vectorize_encoder(data)
+        elif vectorizer_name=='tfidf':
+            data = self.vectorize_tfidf(data)
+        elif vectorizer_name=='word2vec':
+            data = self.vectorize_sent_w2v(data)
         else:
             raise KeyError('Unknown vectorizer!')
         return data

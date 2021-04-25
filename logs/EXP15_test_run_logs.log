@@ -1,4 +1,2 @@
-CRITICAL:root:Creating new train pkl data file
+CRITICAL:root:Use cached train data
 CRITICAL:root:fitting model
-CRITICAL:root:Creating new test pkl data file
-CRITICAL:root:Creating new train pkl data file
