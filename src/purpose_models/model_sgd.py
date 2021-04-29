@@ -20,7 +20,8 @@ RANDOM_SEED = 32
 
 class SGD_model:
 
-    def __init__(self):
+    def __init__(self, n_jobs=15):
+        self.n_jobs = n_jobs
         self.model = CalibratedClassifierCV(SGDClassifier())
         self.metric_learner = None
 
@@ -42,7 +43,7 @@ class SGD_model:
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
-                                      n_jobs=10,
+                                      n_jobs=self.n_jobs,
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)

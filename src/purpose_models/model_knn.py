@@ -14,13 +14,14 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 150
+N_ITER = 40
 RANDOM_SEED = 32
 
 
 class kNN_model:
 
-    def __init__(self):
+    def __init__(self, n_jobs=15):
+        self.n_jobs = n_jobs
         self._best_model_params = None
         self.model = CalibratedClassifierCV(KNeighborsClassifier())
         self.metric_learner = None
@@ -35,8 +36,8 @@ class kNN_model:
 
         parameters = {
             'base_estimator__weights': ['uniform', 'distance'],
-            'base_estimator__n_neighbors': list(range(1, 15)),
-            'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+            'base_estimator__n_neighbors': list(range(1, 5)),
+            'base_estimator__algorithm': ['kd_tree', 'brute'],
             'base_estimator__p': [1, 2, 3, 4]
             }
 
@@ -44,12 +45,21 @@ class kNN_model:
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
-                                      n_jobs=15,
+                                      n_jobs=self.n_jobs,
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
         X = self.metric_learner.transform(X) if self.metric_learner else X
-        decision.fit(X, y)
+        try:
+            decision.fit(X, y)
+        except Exception as e:
+            print(e)
+            decision = KNeighborsClassifier(
+                weights='distance',
+                p=1,
+                n_neighbors=2,
+                algorithm='kd_tree'
+            )
         if self.metric_learner:
             decision = Pipeline([
                 ('metric_learner', self.metric_learner),

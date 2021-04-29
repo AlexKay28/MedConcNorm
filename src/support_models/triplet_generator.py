@@ -1,14 +1,13 @@
 import random
 import pandas as pd
 import numpy as np
-
 from multiprocessing import Pool
 
 from scipy.spatial import distance
 from scipy.spatial.distance import cdist
 from src.configs import GENERAL, PREPROCESSING, MODELING
 
-N_RANDOM_OBS = 200
+N_RANDOM_OBS = None
 N_POTENTIAL_EL = 3
 DISTANCE_TYPE = MODELING['distance_type']
 
@@ -19,27 +18,47 @@ class TripletGenerator:
         self.n_jobs = n_jobs
         self.paired_nodes = []
 
+    @staticmethod
+    def map_parallel(func, iterable_args, n_jobs=1):
+        if n_jobs==1:
+            return map(func, iterable_args)
+        with Pool(n_jobs) as pool:
+            result = pool.starmap(func, iterable_args)
+        return result
+
     def choose_pos_x_hard(self, X, y, anchor_x, anchor_y, n_random_objects=N_RANDOM_OBS, distance_type=DISTANCE_TYPE):
         """
         choose the pos label with attention on the most remote examples
         """
-        N_RANDOM_OBS = 500
         X = X[y==anchor_y]
         y = y[y==anchor_y]
-        n_random_objects = n_random_objects if n_random_objects < X.shape[0] else X.shape[0]
+
+        if n_random_objects is not None:
+            n_random_objects = n_random_objects if n_random_objects < X.shape[0] else X.shape[0]
+        else:
+            n_random_objects = X.shape[0]
+
         indices = np.random.choice(X.shape[0], n_random_objects, replace=False)
         X, y = X[indices], y[indices]
         y = np.array(y)
         if distance_type == 'euclidean':
-            d = map(lambda ex: distance.euclidean(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.euclidean(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'cosine':
-            d = map(lambda ex: distance.cosine(anchor_x, ex), X)
+            d = self.map_parallel(distance.cosine, [(anchor_x, ex) for ex in X])
         elif distance_type == 'minkowski':
-            d = map(lambda ex: distance.minkowski(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.minkowski(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'chebyshev':
-            d = map(lambda ex: distance.chebyshev(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.chebyshev(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'cityblock':
-            d = map(lambda ex: distance.cityblock(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.cityblock(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         else:
             raise KeyError('Unknown distance metric!')
         #print('pos', d.shape, X.shape)
@@ -52,20 +71,33 @@ class TripletGenerator:
         """
         X = X[y!=anchor_y]
         y = y[y!=anchor_y]
-        n_random_objects = n_random_objects if n_random_objects < X.shape[0] else X.shape[0]
+        
+        if n_random_objects is not None:
+            n_random_objects = n_random_objects if n_random_objects < X.shape[0] else X.shape[0]
+        else:
+            n_random_objects = X.shape[0]
+
         indices = np.random.choice(X.shape[0], n_random_objects, replace=False)
         X, y = X[indices], y[indices]
         y = np.array(y)
         if distance_type == 'euclidean':
-            d = map(lambda ex: distance.euclidean(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.euclidean(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'cosine':
-            d = map(lambda ex: distance.cosine(anchor_x, ex), X)
+            d = self.map_parallel(distance.cosine, [(anchor_x, ex) for ex in X])
         elif distance_type == 'minkowski':
-            d = map(lambda ex: distance.minkowski(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.minkowski(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'chebyshev':
-            d = map(lambda ex: distance.chebyshev(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.chebyshev(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         elif distance_type == 'cityblock':
-            d = map(lambda ex: distance.cityblock(anchor_x, ex), X)
+            d = self.map_parallel(
+                lambda x, y: distance.cityblock(x, y)*distance.cosine(x, y),
+                [(anchor_x, ex) for ex in X])
         else:
             raise KeyError('Unknown distance metric!')
         #print('neg', d.shape, X.shape)

@@ -9,7 +9,7 @@ class MetricLearner:
     def __init__(self, learner_name, n_jobs=5):
         self.learner_name = learner_name
         if learner_name == 'siamese':
-            self.learner = SiameseMetricLearner()
+            self.learner = SiameseMetricLearner(n_jobs=n_jobs)
         elif learner_name in ClassicMetricLearner.available_mltools():
             self.learner = ClassicMetricLearner(mltool_name=self.learner_name)
         else:

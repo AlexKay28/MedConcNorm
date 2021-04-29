@@ -24,8 +24,8 @@ from src.data.tokenizer import Tokenizer
 
 N_JOBS = GENERAL['n_jobs']
 VEC_SIZE = PREPROCESSING['sentence_vec']
-FT_EPOCHS = PREPROCESSING['fasttext_model']['epochs']
-FT_WINDOW = PREPROCESSING['fasttext_model']['window']
+FT_EPOCHS = None # DEPRECATED: PREPROCESSING['fasttext_model']['epochs']
+FT_WINDOW = None # DEPRECATED: PREPROCESSING['fasttext_model']['window']
 AGG_TYPE = PREPROCESSING['agg_type']
 ft_model_path = PREPROCESSING['ft_model_path']
 TOKENIZER_NAME = PREPROCESSING['tokenizer_name']
@@ -190,16 +190,8 @@ class SentenceVectorizer:
 
     def vectorize(self, data, vectorizer_name='fasttext'):
 
-        if vectorizer_name=='fasttext_default_100':
-            data = self.vectorize_sent_ft(data, size=100, corpus='default', use_facebook_ft=False)
-        elif vectorizer_name=='fasttext_default_300':
-            data = self.vectorize_sent_ft(data, size=300, corpus='default', use_facebook_ft=False)
-        elif vectorizer_name=='fasttext_cadec_100':
-            data = self.vectorize_sent_ft(data, size=100, corpus='cadec', use_facebook_ft=False)
-        elif vectorizer_name=='fasttext_cadec_300':
-            data = self.vectorize_sent_ft(data, size=300, corpus='cadec', use_facebook_ft=False)
-        elif vectorizer_name=='fasttext_facebook':
-            data = self.vectorize_sent_ft(data, use_facebook_ft=True)
+        if vectorizer_name=='fasttext_facebook':
+            data = self.vectorize_sent_ft(data)
         elif vectorizer_name=='bert-base-uncased':
             data = self.vectorize_span_bert(data, bert_type='bert-base-uncased')
         elif vectorizer_name=='bert-PubMed':

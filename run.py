@@ -32,6 +32,7 @@ from src.features.novelty_detector import NoveltyDetector
 
 USE_MLALG = MODELING['use_metric_learning']
 MODEL_NAME = MODELING['model_name']
+distance_type = MODELING['distance_type']
 VECTORIZER_NAME = PREPROCESSING['sentence_vectorizer']
 ft_model_path = PREPROCESSING['ft_model_path']
 AGG_TYPE = PREPROCESSING['agg_type']
@@ -51,6 +52,16 @@ logging.basicConfig(
     filemode="w+",
 )
 
+def log_dict_to_mlflow(dictionary):
+    """
+    This function logs nested dicts to mlflow
+    """
+    for key, value in dictionary.items():
+        if isinstance(value, dict):
+            log_dict_to_mlflow(value)
+        else:
+            mlflow.log_param(str(key), value)
+
 def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test):
     """
     Runs pipeline with defined settings and log it
@@ -61,9 +72,20 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
 
     with mlflow.start_run(run_name=RUN_NAME) as run:
         # PREPROCESSING, AVAILABLE_CONFIGURATIONS, MODELING
-        mlflow.log_param('GENERAL', GENERAL)
-        mlflow.log_param('PREPROCESSING', PREPROCESSING)
-        mlflow.log_param('MODELING', MODELING)
+        log_dict_to_mlflow(GENERAL)
+        log_dict_to_mlflow(PREPROCESSING)
+        log_dict_to_mlflow(MODELING)
+
+        # MLFLOW LOG PARAMS
+        mlflow.log_param('train corpus', name_train)
+        mlflow.log_param('test corpus', name_test)
+        mlflow.log_param('vectorizer', VECTORIZER_NAME)
+        mlflow.log_param("use_metric_learning", USE_MLALG)
+        mlflow.log_param('model_name', MODEL_NAME)
+        mlflow.log_param('ask_select_novelties', ask_select_novelties)
+        mlflow.log_param('tokenizer_name', tokenizer_name)
+        mlflow.log_param('distance_type', distance_type)
+
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
 
@@ -127,12 +149,6 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 y_test_novelties = y_test[novpred == -1]
                 y_test = y_test[novpred != -1]
 
-            # MLFLOW LOG PARAMS
-            mlflow.log_param('train corpus', name_train)
-            mlflow.log_param('test corpus', name_test)
-            mlflow.log_param('vectorizer', VECTORIZER_NAME)
-            mlflow.log_param("use_metric_learning", USE_MLALG)
-            mlflow.log_param('model_name', MODEL_NAME)
             mlflow.log_param('model_params', trainer.model.get_params())
 
             # MLFLOW LOG METRICS
@@ -200,10 +216,10 @@ def main():
     client = mlflow.tracking.MlflowClient()
     experiment_id = client.get_experiment_by_name(args.experiment_name).experiment_id
     notes = """
-        SMM4H17: 65, 87-90, 97.73
+        SMM4H17: 67.2, 87-90, 91.73
         SMM4H21(20): 36-37, 42-44, 43-45
-        CADEC: 72.72, 70-83. 86.4, 86.93
-        PsyTar: 74.39, 77-82, 85.04, 87.7
+        CADEC: 63.23, 70-83. 86.94
+        PsyTar: 60.15, 77-82, 85.76
     """
     client.set_experiment_tag(experiment_id, "mlflow.note.content", notes)
 
@@ -211,8 +227,8 @@ def main():
     sv = SentenceVectorizer()
     path = 'data/interim/'
 
-    data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec']
-    #data_sets = ['psytar', 'cadec']
+    data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
+    data_sets = ['cadec']
 
     for name_folder_train in os.listdir(path):
         if name_folder_train not in data_sets:
@@ -220,8 +236,11 @@ def main():
         # PREPARE TRAIN SETS
         folder = os.path.join(path, name_folder_train)
         corpus_train = folder + '/train.csv'
+        #corpus_train = folder + '/train_ex.csv'
         for name_folder_test in os.listdir(path):
-            if name_folder_test not in data_sets or name_folder_test!=name_folder_train:
+            if name_folder_test == 'combined' or \
+               name_folder_test not in data_sets or \
+               (name_folder_test!=name_folder_train and name_folder_train != 'combined'):
                 continue
             # PREPARE TEST SETS
             folder = os.path.join(path, name_folder_test)

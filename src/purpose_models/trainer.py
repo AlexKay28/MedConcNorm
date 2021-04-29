@@ -19,6 +19,7 @@ from src.support_models.metric_learner import MetricLearner
 import mlflow
 import mlflow.sklearn
 
+N_JOBS = GENERAL['n_jobs']
 MODEL_NAME = MODELING['model_name']
 METRIC_LEARNER_NAME = MODELING['metric_learner_name']
 USE_MLALG = MODELING['use_metric_learning']
@@ -53,9 +54,9 @@ class Trainer:
         return self.model.classes_
 
     def train_model(self, X, y, mlalg=USE_MLALG, model_name=MODEL_NAME):
-        self.model = self._models[model_name]()
+        self.model = self._models[model_name](n_jobs=N_JOBS)
         if mlalg:
             print('USE MERTRIC LEARNING')
-            metric_learner = MetricLearner(METRIC_LEARNER_NAME)
+            metric_learner = MetricLearner(METRIC_LEARNER_NAME, n_jobs=N_JOBS)
             self.model.add_metric_learner(metric_learner)
         self.model.fit(X, y)

@@ -51,7 +51,7 @@ class SiameseMetricLearner:
         history = self.learner.fit_generator(train_generator,
                                              epochs=epochs,
                                              verbose=1,
-                                             workers=25,
+                                             workers=self.n_jobs,
                                              use_multiprocessing=True,
                                              steps_per_epoch=STEPS_PER_EPOCH,
                                              callbacks=[early_stopping_callback]
@@ -59,8 +59,6 @@ class SiameseMetricLearner:
         del self.learner
         del tgen
         return history
-
-
 
     def transform(self, X):
         return self.emb_model.predict(X.reshape(-1, self.sent_emb , 1))
