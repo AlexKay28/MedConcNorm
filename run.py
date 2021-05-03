@@ -30,6 +30,8 @@ from src.configs import GENERAL, PREPROCESSING, AVAILABLE_CONFIGURATIONS, MODELI
 from src.configs import create_random_configuration, delete_process_configuration_file
 from src.features.novelty_detector import NoveltyDetector
 
+
+calc_subset = 'med' # ['low', 'med', 'big']
 USE_MLALG = MODELING['use_metric_learning']
 MODEL_NAME = MODELING['model_name']
 distance_type = MODELING['distance_type']
@@ -89,25 +91,29 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
 
-            #train_file = f'data/processed/train_ex_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl'
-            train_file = f'data/processed/train_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl'
-
+            if calc_subset == 'low':
+                train_file = f"train_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'med':
+                train_file = f"train_ex2_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'big':
+                train_file = f"train_ex_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            file_path = 'data/processed/' + train_file
             print("TRAIN FILE", train_file)
-            #if f"train_ex_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl" in os.listdir('data/processed'):
-            if f"train_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl" in os.listdir('data/processed'):
+            if train_file in os.listdir('data/processed'):
                 logging.critical('Use cached train data')
                 print('Use cached train data')
-                train = pd.read_pickle(train_file)
+                train = pd.read_pickle(file_path)
             else:
                 # PREPARE TRAIN SETS
-                logging.critical(f'Creating new train pkl data file {train_file}')
+
+                logging.critical(f'Creating new train pkl data file {file_path}')
                 print('Creating new train pkl data file')
                 print(f"Work with {name_train} ", end='.')
                 train = pd.read_csv(corpus_train)
                 print(train.shape)
                 print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
                 train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
-                train.to_pickle(train_file)
+                train.to_pickle('data/processed/' +train_file)
             train = train.dropna()
             X_train, y_train = train['term_vec'], train['code']
             X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
@@ -181,18 +187,7 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
             score_test_seen  = accuracy_top_K_pobs(
                 y_test[seen_data_mask],  y_hat_test_seen,  classes, k=1)
             mlflow.log_metric(f"acc{1}test_seen", score_test_seen)
-            # if any([
-            #     name_train=='smm4h17' and acc1 >= 65.0,
-            #     name_train=='smm4h21' and acc1 >= 37.0,
-            #     name_train=='psytar' and acc1 >= 74.0,
-            #     name_train=='cadec' and acc1 >= 72.0,
-            # ]):
-            #     mlflow.set_tag("QUALITY", f'HIGH ({acc1})')
-            #     mlflow.sklearn.log_model(trainer.model, f"model_for_{name_train}")
-            #     mlflow.log_artifact(train_file)
-            #     mlflow.log_artifact(test_file)
-            # else:
-            #     mlflow.set_tag("QUALITY", f'LOW ({acc1})')
+
 
         except Exception as e:
             logging.error(f"\nERROR FOR RUN: {run.info.run_id}")
@@ -228,15 +223,20 @@ def main():
     path = 'data/interim/'
 
     data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
-    data_sets = ['cadec']
-
+    data_sets = ['smm4h21']
     for name_folder_train in os.listdir(path):
         if name_folder_train not in data_sets:
             continue
         # PREPARE TRAIN SETS
         folder = os.path.join(path, name_folder_train)
-        corpus_train = folder + '/train.csv'
-        #corpus_train = folder + '/train_ex.csv'
+
+        if calc_subset == 'low':
+            corpus_train = folder + '/train.csv'
+        elif calc_subset == 'med':
+            corpus_train = folder + '/train_ex2.csv'
+        elif calc_subset == 'big':
+            corpus_train = folder + '/train_ex.csv'
+
         for name_folder_test in os.listdir(path):
             if name_folder_test == 'combined' or \
                name_folder_test not in data_sets or \

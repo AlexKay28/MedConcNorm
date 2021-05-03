@@ -3,8 +3,11 @@ from sklearn.neighbors import LocalOutlierFactor
 
 class NoveltyDetector:
 
-    def __init__(self):
-        self.model = LocalOutlierFactor(n_neighbors=20, contamination=0.1, novelty=True)
+    def __init__(self, n_neighbors=20, contamination=0.1, novelty=True):
+        self.model = LocalOutlierFactor(
+            n_neighbors=n_neighbors,
+            contamination=contamination,
+            novelty=novelty)
 
     def fit(self, X):
         self.model.fit(X)

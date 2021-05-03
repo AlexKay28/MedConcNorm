@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 40
+N_ITER = 80
 RANDOM_SEED = 32
 
 
@@ -37,7 +37,7 @@ class kNN_model:
         parameters = {
             'base_estimator__weights': ['uniform', 'distance'],
             'base_estimator__n_neighbors': list(range(1, 5)),
-            'base_estimator__algorithm': ['kd_tree', 'brute'],
+            'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
             'base_estimator__p': [1, 2, 3, 4]
             }
 
