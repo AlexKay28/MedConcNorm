@@ -14,8 +14,7 @@ from src.purpose_models.close__synonims_model import *
 
 
 MIN_BATCH_SIZE = 32
-EPOCHS = 120
-STEPS_PER_EPOCH = 200
+EPOCHS = 200
 VALIDATION_STEPS = 50
 N_ITERATIONS = 6
 
@@ -38,23 +37,20 @@ def main():
 
     for corp in ['smm4h21','smm4h17','cadec','psytar']:
         print(f'loading datasets {corp}')
-        terms_train = pd.read_csv(f'data/interim/{corp}/train.csv')
+        terms_train = pd.read_csv(f'data/interim/{corp}/train_pure.csv')
         terms_test = pd.read_csv(f'data/interim/{corp}/test.csv')
         concepts = pd.read_csv('data/interim/used_codes_big.csv')[['code', 'STR', 'SNMS']]
 
         print('preparing and creating generators')
         terms_vecs_train, terms_codes_train, terms_vecs_test,  terms_codes_test, concepts_vecs, codes = prepare_data(model, concepts, terms_train, terms_test)
         n_concepts = len(codes)
-
         assert terms_vecs_train.shape[1]==concepts_vecs.shape[1]
-
         embedding_size = terms_vecs_train.shape[1]
-
 
         print('start fitting')
         for iter in tqdm(range(N_ITERATIONS)):
             batch_size = MIN_BATCH_SIZE*(iter+1)
-            steps_per_epoch = terms_train.shape[0]//batch_size * 5
+            steps_per_epoch = terms_train.shape[0]//batch_size * 10
             for dn_layers in [1, 3, 5]:
                 with mlflow.start_run(run_name=f"run{iter}") as run:
                     train_gen, test_gen = get_data_gens(terms_vecs_train,

@@ -70,7 +70,8 @@ def get_syn_model(n_concepts, embedding_size, dn_layers=1):
     inputs1 =    tf.keras.layers.Input(shape=(embedding_size), name='term')
     dn =         tf.keras.layers.Dense(512)(inputs1)
     for i in range(1, dn_layers+1):
-        dn =         tf.keras.layers.Dense(512)(dn)
+        dn =     tf.keras.layers.Dense(512)(dn)
+        dn =     tf.keras.layers.Dropout(0.2)(dn) 
     dn =         tf.keras.layers.Dense(embedding_size)(dn)
     term_hat =   tf.keras.layers.Flatten()(dn)
     inputs2 =    tf.keras.layers.Input(shape=(n_concepts, embedding_size), name='concepts')

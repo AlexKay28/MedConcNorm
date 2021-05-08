@@ -31,7 +31,7 @@ from src.configs import create_random_configuration, delete_process_configuratio
 from src.features.novelty_detector import NoveltyDetector
 
 
-calc_subset = 'med' # ['low', 'med', 'big']
+#calc_subset = 'pure' # ['pure', 'concept', 'concept_retro', 'all_internal', 'big']
 USE_MLALG = MODELING['use_metric_learning']
 MODEL_NAME = MODELING['model_name']
 distance_type = MODELING['distance_type']
@@ -64,7 +64,7 @@ def log_dict_to_mlflow(dictionary):
         else:
             mlflow.log_param(str(key), value)
 
-def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test):
+def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test, calc_subset):
     """
     Runs pipeline with defined settings and log it
     in MLflow Tracker node
@@ -87,16 +87,20 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
         mlflow.log_param('ask_select_novelties', ask_select_novelties)
         mlflow.log_param('tokenizer_name', tokenizer_name)
         mlflow.log_param('distance_type', distance_type)
+        mlflow.log_param('calc_subset', calc_subset)
 
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
-
-            if calc_subset == 'low':
-                train_file = f"train_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
-            elif calc_subset == 'med':
-                train_file = f"train_ex2_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            if calc_subset == 'pure':
+                train_file = f"train_pure_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'concept':
+                train_file = f"train_concept_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'concept_retro':
+                train_file = f"train_concept_retro_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'all_internal':
+                train_file = f"train_all_internal_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
             elif calc_subset == 'big':
-                train_file = f"train_ex_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+                train_file = f"train_big_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
             file_path = 'data/processed/' + train_file
             print("TRAIN FILE", train_file)
             if train_file in os.listdir('data/processed'):
@@ -115,6 +119,7 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
                 train.to_pickle('data/processed/' +train_file)
             train = train.dropna()
+            logging.critical(f'train shape: {train.shape}')
             X_train, y_train = train['term_vec'], train['code']
             X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
             y_train = y_train.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
@@ -144,7 +149,8 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
                 test.to_pickle(test_file)
 
-            test = test.dropna()
+            #test = test.dropna()
+            logging.critical(f'test shape: {test.shape}')
             X_test, y_test = test['term_vec'], test['code']
             X_test = pd.DataFrame([pd.Series(x) for x in X_test]).to_numpy()
             y_test = y_test.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
@@ -222,36 +228,41 @@ def main():
     sv = SentenceVectorizer()
     path = 'data/interim/'
 
-    data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
-    data_sets = ['smm4h21']
-    for name_folder_train in os.listdir(path):
-        if name_folder_train not in data_sets:
-            continue
-        # PREPARE TRAIN SETS
-        folder = os.path.join(path, name_folder_train)
-
-        if calc_subset == 'low':
-            corpus_train = folder + '/train.csv'
-        elif calc_subset == 'med':
-            corpus_train = folder + '/train_ex2.csv'
-        elif calc_subset == 'big':
-            corpus_train = folder + '/train_ex.csv'
-
-        for name_folder_test in os.listdir(path):
-            if name_folder_test == 'combined' or \
-               name_folder_test not in data_sets or \
-               (name_folder_test!=name_folder_train and name_folder_train != 'combined'):
+    data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec'] #, 'combined']
+    for calc_subset in ['pure', 'concept', 'concept_retro']: #, 'all_internal', 'big']:
+        for name_folder_train in os.listdir(path):
+            if name_folder_train not in data_sets:
                 continue
-            # PREPARE TEST SETS
-            folder = os.path.join(path, name_folder_test)
-            corpus_test = folder + '/test.csv'
+            # PREPARE TRAIN SETS
+            folder = os.path.join(path, name_folder_train)
 
-            print(name_folder_train, name_folder_test)
-            run_pipe(
-                sv, meddra_labels,
-                name_folder_train, corpus_train,
-                name_folder_test, corpus_test
-            )
+            if calc_subset == 'pure':
+                corpus_train = folder + '/train_pure.csv'
+            elif calc_subset == 'concept':
+                corpus_train = folder + '/train_concept.csv'
+            elif calc_subset == 'concept_retro':
+                corpus_train = folder + '/train_concept_retro.csv'
+            elif calc_subset == 'all_internal':
+                corpus_train = folder + '/train_all_internal.csv'
+            elif calc_subset == 'big':
+                corpus_train = folder + '/train_big.csv'
+
+            for name_folder_test in os.listdir(path):
+                if name_folder_test == 'combined' or \
+                   name_folder_test not in data_sets or \
+                   (name_folder_test!=name_folder_train and name_folder_train != 'combined'):
+                    continue
+                # PREPARE TEST SETS
+                folder = os.path.join(path, name_folder_test)
+                corpus_test = folder + '/test.csv'
+
+                print(name_folder_train, name_folder_test)
+                run_pipe(
+                    sv, meddra_labels,
+                    name_folder_train, corpus_train,
+                    name_folder_test, corpus_test,
+                    calc_subset
+                )
     delete_process_configuration_file()
     print('DONE')
 
