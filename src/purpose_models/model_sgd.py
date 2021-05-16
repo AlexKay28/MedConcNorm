@@ -28,10 +28,10 @@ class SGD_model:
     def add_metric_learner(self, metric_learner):
         self.metric_learner = metric_learner
 
-    def get_best_model_configuration(self, X, y):
+    def get_best_model_configuration(self, X, y, X_test, y_test):
         estimator = CalibratedClassifierCV(SGDClassifier())
         if self.metric_learner:
-            self.metric_learner.fit(X, y)
+            self.metric_learner.fit(X, y, X_test, y_test)
 
         parameters = {
             'base_estimator__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'],
@@ -60,9 +60,9 @@ class SGD_model:
             self._best_model_params = decision.get_params()
         return decision
 
-    def fit(self, X, y):
+    def fit(self, X, y, X_test, y_test):
         self.classes_ = np.unique(y)
-        self.model = self.get_best_model_configuration(X, y)
+        self.model = self.get_best_model_configuration(X, y, X_test, y_test)
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)

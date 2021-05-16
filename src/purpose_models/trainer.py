@@ -53,10 +53,10 @@ class Trainer:
     def get_classes(self):
         return self.model.classes_
 
-    def train_model(self, X, y, mlalg=USE_MLALG, model_name=MODEL_NAME):
+    def train_model(self, X, y, X_test, y_test, mlalg=USE_MLALG, model_name=MODEL_NAME):
         self.model = self._models[model_name](n_jobs=N_JOBS)
         if mlalg:
             print('USE MERTRIC LEARNING')
             metric_learner = MetricLearner(METRIC_LEARNER_NAME, n_jobs=N_JOBS)
             self.model.add_metric_learner(metric_learner)
-        self.model.fit(X, y)
+        self.model.fit(X, y, X_test, y_test)

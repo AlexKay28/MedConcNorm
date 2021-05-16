@@ -42,8 +42,8 @@ modeling:
     #- LFDA
     - siamese
   use_metric_learning:
-    - True
-    #- False
+    #- True
+    - False
 
   siamese_params:
     batch_size:
@@ -55,10 +55,10 @@ modeling:
       #- 0.0005
     epochs:
       #- 30
-      #- 40
-      #- 50
-      #- 70
-      - 100
+      - 40
+      - 50
+      - 70
+      #- 100
       #- 250
       #- 350
     steps_per_epoch:
@@ -78,12 +78,12 @@ modeling:
 
   distance_type:
     #- euclidean
-    #- cosine
+    #- cosine # ТВОЯ НЕЙРОСЕТЬ metric learning ТРЕНИРУЕТСЯ НА КОСИНУСНОЕ РАССТОЯНИЕ И ЕВКЛИДОВО!!
     - minkowski #
     - chebyshev
 
   model_name:
     #- SVC
     - kNN #
-    #- SGD
+    - SGD
     #s- LGBM

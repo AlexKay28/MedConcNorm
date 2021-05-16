@@ -26,10 +26,11 @@ class SiameseMetricLearner:
     def summary(self):
         return self.learner.summary()
 
-    def fit(self, X, y, epochs=EPOCHS):
+    def fit(self, X, y, X_test, y_test, epochs=EPOCHS):
         self.sent_emb = X.shape[1]
         tgen = TripletGenerator()
         train_generator = tgen.generate_triplets(X, y, BATCH_SIZE)
+        test_generator = tgen.generate_triplets(X_test, y_test, 32)
         self.emb_model = base_model(self.sent_emb)
         self.learner = siamese_model(
             self.emb_model,
@@ -40,15 +41,16 @@ class SiameseMetricLearner:
             )
 
         early_stopping_callback = EarlyStopping(
-            monitor="loss",
-            min_delta=0,
-            patience=20,
+            monitor="loss", #"val_loss",
+            patience=10,
             verbose=1,
-            mode="auto",
-            baseline=None,
+            mode='min',
+            min_delta=1e-4,
             restore_best_weights=True,
         )
         history = self.learner.fit_generator(train_generator,
+                                             # validation_data=test_generator,
+                                             # validation_steps=15,
                                              epochs=epochs,
                                              verbose=1,
                                              workers=self.n_jobs,
@@ -63,6 +65,6 @@ class SiameseMetricLearner:
     def transform(self, X):
         return self.emb_model.predict(X.reshape(-1, self.sent_emb , 1))
 
-    def fit_transform(self, X, y):
-        self.fit(X, y)
+    def fit_transform(self, X, y, X_test, y_test):
+        self.fit(X, y, X_test, y_test)
         return self.transform(X)
