@@ -19,9 +19,10 @@ parser.add_argument("--experiment_name", default="test baseline run", type=str)
 args = parser.parse_args()
 print(args)
 RUN_NAME = args.run_name
-os.environ["RUN_NAME"] = RUN_NAME
 EXPERIMENT_NAME = args.experiment_name
+os.environ["RUN_NAME"] = RUN_NAME
 os.environ["EXPERIMENT_NAME"] = EXPERIMENT_NAME
+os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
 
 from src.data.sentence_vectorizer import SentenceVectorizer
 from src.purpose_models.trainer import Trainer
@@ -100,6 +101,15 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 train_file = f"train_aug_nlpaug_wdnt_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_nlpaug_ppdb':
                 train_file = f"train_aug_nlpaug_ppdb_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+
+            elif calc_subset == 'augmented_textaugment_wdnt_insrt':
+                train_file = f"train_aug_textaugment_wdnt_insrt_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'augmented_textaugment_wdnt_2_repl':
+                train_file = f"train_aug_textaugment_wdnt_2_rpl_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'augmented_textaugment_wdnt_3_repl':
+                train_file = f"train_aug_textaugment_wdnt_3_rpl_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
+            elif calc_subset == 'augmented_textaugment_wdnt_insrt_retro':
+                train_file = f"train_aug_textaugment_wdnt_insrt_retro_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
 
             elif calc_subset == 'concept':
                 train_file = f"train_concept_{name_train}_{VECTORIZER_NAME_FILE}_{tokenizer_name}.pkl"
@@ -207,7 +217,7 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
             mlflow.log_artifact(log_file)
             mlflow.set_tag("LOG_STATUS", "FAILED RUN")
             mlflow.end_run(status='FAILED')
-        del trainer
+        #del trainer
 
 
 def main():
@@ -236,11 +246,13 @@ def main():
     path = 'data/interim/'
 
     data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec'] #, 'combined']
-
-#    data_sets = ['cadec', 'smm4h21']
-    data_sets = np.random.choice(data_sets, size=2)
+    #data_sets = ['cadec', 'smm4h21']
+    #data_sets = np.random.choice(data_sets, size=2)
     #for calc_subset in ['pure', 'concept', 'concept_retro']: #, 'all_internal', 'big']:
-    for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb']:
+    #for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb']:
+    #for calc_subset in ['augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl']:
+    #for calc_subset in ['augmented_textaugment_wdnt_insrt_retro']:
+    for calc_subset in ['pure']:
         for name_folder_train in os.listdir(path):
             if name_folder_train not in data_sets:
                 continue
@@ -255,6 +267,16 @@ def main():
                 corpus_train = folder + '/train_aug_wdnt.csv'
             elif calc_subset == 'augmented_nlpaug_ppdb':
                 corpus_train = folder + '/train_aug_ppdb.csv'
+
+            elif calc_subset == 'augmented_textaugment_wdnt_insrt':
+                corpus_train = folder + '/train_textaug_wdnt_insrt.csv'
+            elif calc_subset == 'augmented_textaugment_wdnt_2_repl':
+                corpus_train = folder + '/train_textaug_wdnt_2_repl.csv'
+            elif calc_subset == 'augmented_textaugment_wdnt_3_repl':
+                corpus_train = folder + '/train_textaug_wdnt_3_repl.csv'
+            elif calc_subset == 'augmented_textaugment_wdnt_insrt_retro':
+                corpus_train = folder + '/train_textaug_wdnt_insrt_retro.csv'
+
             elif calc_subset == 'concept':
                 corpus_train = folder + '/train_concept.csv'
             elif calc_subset == 'concept_retro':

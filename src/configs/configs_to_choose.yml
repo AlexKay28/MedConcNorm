@@ -1,5 +1,5 @@
 general:
-  n_jobs: 20
+  n_jobs: 25
   random_seed: 42
 
 preprocessing:
@@ -10,8 +10,9 @@ preprocessing:
     #- gensim
 
   sentence_vectorizer:
-    - fasttext_facebook #
+    #- fasttext_facebook #
     #- bert-base-uncased
+    - endr-bert
     # - bert-PubMed
     #- bertweet-base
     #- encoder
@@ -19,7 +20,7 @@ preprocessing:
     #- word2vec
 
   agg_type:
-    - avg #
+    - mean #
     #- max
 
   ask_select_novelties:
@@ -54,10 +55,9 @@ modeling:
       - 0.001
       #- 0.0005
     epochs:
-      #- 30
-      - 40
+      - 30
       - 50
-      - 70
+      #- 70
       #- 100
       #- 250
       #- 350
@@ -78,7 +78,7 @@ modeling:
 
   distance_type:
     #- euclidean
-    #- cosine # ТВОЯ НЕЙРОСЕТЬ metric learning ТРЕНИРУЕТСЯ НА КОСИНУСНОЕ РАССТОЯНИЕ И ЕВКЛИДОВО!!
+    - cosine # ТВОЯ НЕЙРОСЕТЬ metric learning ТРЕНИРУЕТСЯ НА КОСИНУСНОЕ РАССТОЯНИЕ И ЕВКЛИДОВО!!
     - minkowski #
     - chebyshev
 

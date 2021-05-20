@@ -48,7 +48,8 @@ def main():
             concepts = pd.read_csv('data/interim/used_codes_big.csv')[['code', 'STR', 'SNMS']]
 
             print('preparing and creating generators')
-            terms_vecs_train, terms_codes_train, terms_vecs_test,  terms_codes_test, concepts_vecs, codes = prepare_data(model, concepts, terms_train, terms_test)
+            terms_vecs_train, terms_codes_train, terms_vecs_test,  terms_codes_test, concepts_vecs, codes \
+                = prepare_data(model, concepts, terms_train, terms_test)
             n_concepts = len(codes)
             assert terms_vecs_train.shape[1]==concepts_vecs.shape[1]
             embedding_size = terms_vecs_train.shape[1]

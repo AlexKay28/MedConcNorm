@@ -2,18 +2,15 @@ import re
 import numpy as np
 import pandas as pd
 import pickle
+import torch
 from functools import reduce
 from tqdm import tqdm
-tqdm.pandas()
-
 import keras
 from sklearn.feature_extraction.text import TfidfVectorizer
-
 import tensorflow as tf
 from tensorflow.keras.preprocessing import sequence
 from sent2vec.vectorizer import Vectorizer
-from transformers import BertTokenizer, TFBertModel
-
+from transformers import BertTokenizer, TFBertModel, BertModel
 from gensim.models import KeyedVectors
 from gensim.models import FastText
 from gensim.test.utils import common_texts
@@ -21,6 +18,9 @@ from gensim.utils import tokenize
 
 from src.configs import GENERAL, PREPROCESSING
 from src.data.tokenizer import Tokenizer
+
+tqdm.pandas()
+tf.executing_eagerly()
 
 N_JOBS = GENERAL['n_jobs']
 VEC_SIZE = PREPROCESSING['sentence_vec']
@@ -79,7 +79,7 @@ class SentenceVectorizer:
 
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
-                if agg_type == 'avg':
+                if agg_type == 'mean':
                     return vecs.mean(axis=0)
                 elif agg_type == 'max':
                     return vecs.max(axis=0)
@@ -98,7 +98,7 @@ class SentenceVectorizer:
 
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
-                if agg_type == 'avg':
+                if agg_type == 'mean':
                     return vecs.mean(axis=0)
                 elif agg_type == 'max':
                     return vecs.max(axis=0)
@@ -116,12 +116,11 @@ class SentenceVectorizer:
         vectors = model_vec.vectors
         return pd.concat([data, pd.DataFrame(vectors)], axis=1)
 
-    def vectorize_span_bert(self, data, feat_col='term', text_col='text',
+    def vectorize_span_bert(self, data, feat_col='term', text_col='sent',
                                   bert_type='bert-base-uncased', agg_type='mean'):
-        tokenizer_bert = BertTokenizer.from_pretrained(bert_type)
-        model = TFBertModel.from_pretrained(bert_type)
-
-        def get_vecors_from_context(text, span):
+        # DEFINE FUNCS
+        def get_vecors_from_context_TF(text, span):
+            """ Get sent vec with TF model """
             if len(text) > 512:
                 try:
                     #print('BIG TEXT')
@@ -138,10 +137,10 @@ class SentenceVectorizer:
                     text = span
             span_vecs = []
             #print('the text:', text)
-            text_tokens = tokenizer_bert.tokenize(text)
-            span_tokens = tokenizer_bert.tokenize(span)
-            word_ids = tokenizer_bert.encode(text_tokens)
-            words_tokenized = tokenizer_bert.decode(word_ids)
+            text_tokens = tokenizer.tokenize(text)
+            span_tokens = tokenizer.tokenize(span)
+            word_ids = tokenizer.encode(text_tokens)
+            words_tokenized = tokenizer.decode(word_ids)
             word_ids_tf = tf.constant(word_ids)[None, :]  # Batch size 1
             outputs = model(word_ids_tf)
             vectors = outputs[0][0]  # The last hidden-state is the first element of the output tuple
@@ -150,12 +149,36 @@ class SentenceVectorizer:
                     span_vecs.append(vector.numpy())
             return span_vecs
 
-        def aggregation_type(numpy_array):
+        def get_vecors_from_context_TORCH(text, span):
+            """ Get sent vec with TOCH model """
+            tokenized_text = tokenizer.tokenize(text)
+            tokenized_span = tokenizer.tokenize(span)
+            text_ids = tokenizer.encode(text)
+            # get tokens vecs
+            text_ids = torch.tensor(text_ids).unsqueeze(0)
+            outputs = model(text_ids)
+            last_hidden_states = outputs[0]
+            # define which vecs are related to span
+            span_words_indices = [
+                i+1 for i in range(len(tokenized_text)) if tokenized_text[i] in tokenized_span
+            ][:len(tokenized_span)]
+            span_vec = np.array(last_hidden_states[0][span_words_indices].tolist())
+            return span_vec
+
+        def aggregation_type(numpy_array, agg_type=AGG_TYPE):
             agg = {
                 'sum': np.sum,
                 'mean': np.mean
             }
-            return agg['mean'](numpy_array, axis=0)
+            return agg[agg_type](numpy_array, axis=0)
+
+        tokenizer = BertTokenizer.from_pretrained(bert_type)
+        if bert_type in ['cimm-kzn/endr-bert']:
+            model = BertModel.from_pretrained(bert_type)
+            get_vecors_from_context = get_vecors_from_context_TORCH
+        else:
+            model = TFBertModel.from_pretrained(bert_type)
+            get_vecors_from_context = get_vecors_from_context_TF
 
         if text_col in data.columns:
             data[feat_col+'_vec'] = data.progress_apply(
@@ -189,11 +212,13 @@ class SentenceVectorizer:
 
 
     def vectorize(self, data, vectorizer_name='fasttext'):
-
+        print(f'Used vectorizer: {vectorizer_name}')
         if vectorizer_name=='fasttext_facebook':
             data = self.vectorize_sent_ft(data)
         elif vectorizer_name=='bert-base-uncased':
             data = self.vectorize_span_bert(data, bert_type='bert-base-uncased')
+        elif vectorizer_name=='endr-bert':
+            data = self.vectorize_span_bert(data, bert_type='cimm-kzn/endr-bert')
         elif vectorizer_name=='bert-PubMed':
             data = self.vectorize_span_bert(data, bert_type='cambridgeltl/SapBERT-from-PubMedBERT-fulltext')
         elif vectorizer_name=='bertweet-base':
