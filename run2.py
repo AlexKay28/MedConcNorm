@@ -6,23 +6,24 @@ import mlflow
 import mlflow.sklearn
 from copy import copy
 
-import tensorflow as tf
-from gensim.models import FastText
-from src.data.sentence_vectorizer import SentenceVectorizer
-from src.features.retrofitting import retrofitting, vectorize_sent, retrofit_row
-from src.purpose_models.close__synonims_model import *
-
-
 MIN_BATCH_SIZE = 32
 EPOCHS = 200
 VALIDATION_STEPS = 50
 N_ITERATIONS = 6
 
+vec_model_name = 'endr-bert'
+experiment_name = 'Synonims_net_bert'
+os.environ["vec_model_name"] = vec_model_name
+from src.purpose_models.close__synonims_model import *
+from src.data.sentence_vectorizer import SentenceVectorizer
+
+
+
 def main():
     # configure mlflow
-    mlflow.set_experiment('Synonims_net')
+    mlflow.set_experiment(experiment_name)
     client = mlflow.tracking.MlflowClient()
-    experiment_id = client.get_experiment_by_name('Synonims_net').experiment_id
+    experiment_id = client.get_experiment_by_name(experiment_name).experiment_id
     notes = """
         SMM4H17: 67.2, 87-90, 91.73
         SMM4H21(20): 36-37, 42-44, 43-45
@@ -31,16 +32,15 @@ def main():
     """
     client.set_experiment_tag(experiment_id, "mlflow.note.content", notes)
 
-    print('loading fasttext')
-    model = FastText.load_fasttext_format(
-        'data/external/embeddings/cc.en.300.bin')
+
 
     for corp in ['smm4h21','smm4h17','cadec','psytar']:
         print(f'loading datasets {corp}')
 
         terms_train_dataset = [
-            'train_pure.csv', 'train_aug.csv',
-            'train_aug_wdnt.csv', 'train_aug_ppdb.csv'
+            'train_pure.csv',
+            # 'train_aug.csv',
+            # 'train_aug_wdnt.csv', 'train_aug_ppdb.csv'
         ]
         for terms_train_name in terms_train_dataset:
             terms_train = pd.read_csv(f'data/interim/{corp}/{terms_train_name}')
@@ -49,7 +49,7 @@ def main():
 
             print('preparing and creating generators')
             terms_vecs_train, terms_codes_train, terms_vecs_test,  terms_codes_test, concepts_vecs, codes \
-                = prepare_data(model, concepts, terms_train, terms_test)
+                = prepare_data(concepts, terms_train, terms_test)
             n_concepts = len(codes)
             assert terms_vecs_train.shape[1]==concepts_vecs.shape[1]
             embedding_size = terms_vecs_train.shape[1]

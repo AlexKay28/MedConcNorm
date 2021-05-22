@@ -1,18 +1,24 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from src.features.retrofitting import retrofitting, vectorize_sent, retrofit_row
+from src.features.retrofitting import vectorize_mention, vectorize_concept
 
-def prepare_data(vec_model, concepts, terms_train, terms_test, use_case='train_codes'):
-    terms_vecs_train = terms_train.apply(lambda row: vectorize_sent(vec_model, row['term']), axis=1)
-    terms_vecs_train = pd.DataFrame(terms_vecs_train.values.tolist()).dropna().values
+def prepare_data(concepts, terms_train, terms_test, use_case='train_codes'):
 
-    terms_vecs_test = terms_test.apply(lambda row: vectorize_sent(vec_model, row['term']), axis=1)
-    terms_vecs_test = pd.DataFrame(terms_vecs_test.values.tolist()).dropna().values
+    print(f"TRAIN COLUMNS: {terms_train.columns}")
+    print(f"TEST COLUMNS: {terms_test.columns}")
+
+    print("Prepare train columns")
+    terms_vecs_train = terms_train.progress_apply(lambda row: vectorize_mention(row), axis=1)
+    terms_vecs_train = pd.DataFrame(terms_vecs_train.dropna().values.tolist()).dropna().values
+
+    print("Prepare test columns")
+    terms_vecs_test = terms_test.progress_apply(lambda row: vectorize_mention(row), axis=1)
+    terms_vecs_test = pd.DataFrame(terms_vecs_test.dropna().values.tolist()).dropna().values
 
     if use_case=='train_codes':
         # все из трейна
@@ -26,8 +32,9 @@ def prepare_data(vec_model, concepts, terms_train, terms_test, use_case='train_c
     else:
         raise KeyError('Unknown use case')
 
+    print("Prepare concept columns")
     codes = concepts['index'].to_numpy()
-    concepts_vecs = concepts.apply(lambda row: retrofit_row(vec_model, row), axis=1)
+    concepts_vecs = concepts.progress_apply(lambda row: vectorize_concept(row), axis=1)
     concepts_vecs = pd.DataFrame(concepts_vecs.values.tolist()).dropna().values
 
     terms_codes_train = terms_train['code'].apply(
@@ -71,7 +78,7 @@ def get_syn_model(n_concepts, embedding_size, dn_layers=1):
     dn =         tf.keras.layers.Dense(512)(inputs1)
     for i in range(1, dn_layers+1):
         dn =     tf.keras.layers.Dense(512)(dn)
-        dn =     tf.keras.layers.Dropout(0.2)(dn) 
+        dn =     tf.keras.layers.Dropout(0.2)(dn)
     dn =         tf.keras.layers.Dense(embedding_size)(dn)
     term_hat =   tf.keras.layers.Flatten()(dn)
     inputs2 =    tf.keras.layers.Input(shape=(n_concepts, embedding_size), name='concepts')

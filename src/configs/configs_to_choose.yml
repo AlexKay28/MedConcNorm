@@ -84,6 +84,6 @@ modeling:
 
   model_name:
     #- SVC
-    - kNN #
+    #- kNN #
     - SGD
     #s- LGBM

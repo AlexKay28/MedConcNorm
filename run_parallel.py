@@ -7,6 +7,7 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
+parser.add_argument("--file", default="run.py", type=str)
 parser.add_argument("--n_jobs", default="1", type=int)
 parser.add_argument("--experiment_name", default="default", type=str)
 args = parser.parse_args()
@@ -19,12 +20,13 @@ def run_command(command):
 def main():
     exp_name = args.experiment_name
     n_jobs = args.n_jobs
+    file_name = args.file
     # creat runs stack
     commands = []
     for run in range(100):
         commands.append([
             f"python3",
-            f"run.py",
+            f"{file_name}",
             f"--experiment_name={exp_name}",
             f"--run_name=run_{run}"
         ])

@@ -252,7 +252,9 @@ def main():
     #for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt_retro']:
-    for calc_subset in ['pure']:
+    for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb',
+                        'augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl',
+                        'augmented_textaugment_wdnt_insrt_retro']:
         for name_folder_train in os.listdir(path):
             if name_folder_train not in data_sets:
                 continue
