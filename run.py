@@ -245,16 +245,15 @@ def main():
     sv = SentenceVectorizer()
     path = 'data/interim/'
 
-    data_sets = ['smm4h17', 'smm4h21', 'psytar', 'cadec'] #, 'combined']
-    #data_sets = ['cadec', 'smm4h21']
-    #data_sets = np.random.choice(data_sets, size=2)
+    data_sets = ['smm4h17', 'smm4h21', 'psytar'] #, 'cadec', 'combined']
+    data_sets = np.random.choice(data_sets, size=1)
     #for calc_subset in ['pure', 'concept', 'concept_retro']: #, 'all_internal', 'big']:
     #for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt_retro']:
-    for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb',
-                        'augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl',
-                        'augmented_textaugment_wdnt_insrt_retro']:
+    calc_subsets = ['augmented_textaugment_wdnt', 'augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_insrt_retro']
+    calc_subsets = np.random.choice(calc_subsets, size=1)
+    for calc_subset in calc_subsets: #, 'concept', 'concept_retro']:
         for name_folder_train in os.listdir(path):
             if name_folder_train not in data_sets:
                 continue

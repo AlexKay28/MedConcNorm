@@ -11,9 +11,19 @@ EPOCHS = 200
 VALIDATION_STEPS = 50
 N_ITERATIONS = 6
 
+
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument("--experiment_name", default="default", type=str)
+parser.add_argument("--run_name", default="default", type=str)
+args = parser.parse_args()
+
+
 vec_model_name = 'endr-bert'
-experiment_name = 'Synonims_net_bert'
 os.environ["vec_model_name"] = vec_model_name
+experiment_name = args.experiment_name
+
 from src.purpose_models.close__synonims_model import *
 from src.data.sentence_vectorizer import SentenceVectorizer
 
