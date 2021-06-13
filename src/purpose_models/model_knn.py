@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 80
+N_ITER = 180
 RANDOM_SEED = 32
 
 
@@ -29,19 +29,15 @@ class kNN_model:
     def add_metric_learner(self, metric_learner):
         self.metric_learner = metric_learner
 
-    def get_best_model_configuration(self, X, y, X_test, y_test):
+    def get_best_model_configuration(self, X, y):
         estimator = CalibratedClassifierCV(KNeighborsClassifier())
-        if self.metric_learner:
-            self.metric_learner.fit(X, y, X_test, y_test)
-
         parameters = {
             'base_estimator__weights': ['uniform', 'distance'],
-            'base_estimator__n_neighbors': list(range(1, 5)),
+            'base_estimator__n_neighbors': list(range(1, 3)),
             'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
             'base_estimator__p': [1, 2, 3, 4]
             }
-
-        decision = RandomizedSearchCV(estimator=estimator,
+        self.model = RandomizedSearchCV(estimator=estimator,
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
@@ -49,33 +45,23 @@ class kNN_model:
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
-        X = self.metric_learner.transform(X) if self.metric_learner else X
         try:
-            decision.fit(X, y)
+            self.model.fit(X, y)
         except Exception as e:
-            print(e)
-            decision = KNeighborsClassifier(
-                weights='distance',
-                p=1,
-                n_neighbors=2,
-                algorithm='kd_tree'
-            )
-        if self.metric_learner:
-            decision = Pipeline([
-                ('metric_learner', self.metric_learner),
-                #('svc', estimator)
-                ('knn', decision)
-            ])
-            self._best_model_params = decision['knn'].best_params_
-        else:
-            self._best_model_params = decision.best_params_
-        return decision
+            self.model = KNeighborsClassifier()
+            self.model.fit(X, y)
+        self._best_model_params = self.model.best_params_
 
     def fit(self, X, y, X_test, y_test):
         self.classes_ = np.unique(y)
-        self.model = self.get_best_model_configuration(X, y, X_test, y_test)
+        if self.metric_learner:
+            self.metric_learner.fit(X, y, X_test, y_test)
+            X = self.metric_learner.transform(X)
+        self.get_best_model_configuration(X, y)
 
     def predict_proba(self, X):
+        if self.metric_learner:
+            X = self.metric_learner.transform(X)
         return self.model.predict_proba(X)
 
     def get_params(self):

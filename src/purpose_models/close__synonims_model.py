@@ -73,11 +73,16 @@ def cosine_mul_fun(inputs):
     distance = 1 - tf.matmul([normalize_vec1], normalize_vec2, transpose_b=True)
     return distance[0]
 
-def get_syn_model(n_concepts, embedding_size, dn_layers=1):
+def get_syn_model(n_concepts,
+                  embedding_size,
+                  learning_rate=0.0005,
+                  layer_size=512,
+                  dn_layers=1):
+
     inputs1 =    tf.keras.layers.Input(shape=(embedding_size), name='term')
-    dn =         tf.keras.layers.Dense(512)(inputs1)
+    dn =         tf.keras.layers.Dense(layer_size)(inputs1)
     for i in range(1, dn_layers+1):
-        dn =     tf.keras.layers.Dense(512)(dn)
+        dn =     tf.keras.layers.Dense(layer_size)(dn)
         dn =     tf.keras.layers.Dropout(0.2)(dn)
     dn =         tf.keras.layers.Dense(embedding_size)(dn)
     term_hat =   tf.keras.layers.Flatten()(dn)
@@ -88,7 +93,7 @@ def get_syn_model(n_concepts, embedding_size, dn_layers=1):
 
     model = tf.keras.Model(inputs=[inputs1, inputs2], outputs=[output])
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(lr=0.0005),
+        optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
         loss="categorical_crossentropy",
         metrics=[tf.keras.metrics.CategoricalAccuracy(name='cat_acc')],
     )
@@ -107,7 +112,23 @@ def get_data_gens(terms_vecs_train,
 
     return train_gen, test_gen
 
-def fit_synonimer(train_gen, test_gen, n_concepts, embedding_size, dn_layers=1,
+def save_history_plot(history):
+    # summarize history for accuracy
+    plt.plot(history.history['cat_acc'])
+    plt.plot(history.history['val_cat_acc'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig("/home/kaigorodov/myprojects/MedConcNorm/reports/run2_plot.pdf")
+
+def fit_synonimer(train_gen,
+                  test_gen,
+                  n_concepts,
+                  embedding_size,
+                  learning_rate,
+                  layer_size,
+                  dn_layers=1,
                   verbose=2,
                   epochs=80,
                   steps_per_epoch=200,
@@ -122,7 +143,14 @@ def fit_synonimer(train_gen, test_gen, n_concepts, embedding_size, dn_layers=1,
             restore_best_weights=True,
         )
 
-    model = get_syn_model(n_concepts, embedding_size, dn_layers=dn_layers)
+    model = get_syn_model(
+        n_concepts,
+        embedding_size,
+        learning_rate=learning_rate,
+        layer_size=layer_size,
+        dn_layers=dn_layers,
+    )
+
     if show_model_info:
         model.summary()
     history = model.fit_generator(train_gen,
@@ -132,8 +160,8 @@ def fit_synonimer(train_gen, test_gen, n_concepts, embedding_size, dn_layers=1,
               validation_data=test_gen,
               validation_steps=validation_steps,
               callbacks=[early_stopping_callback])
-
+    plt.tight_layout()
+    save_history_plot(history)
     max_train = np.array(history.history['cat_acc']).max()
     max_val   = np.array(history.history['val_cat_acc']).max()
-
     return max_train, max_val

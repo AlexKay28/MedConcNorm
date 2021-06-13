@@ -16,6 +16,7 @@ LR = MODELING['siamese_params']['lr']
 BATCH_SIZE = MODELING['siamese_params']['batch_size']
 EPOCHS = MODELING['siamese_params']['epochs']
 STEPS_PER_EPOCH = MODELING['siamese_params']['steps_per_epoch']
+PATIENCE = MODELING['siamese_params']['patience']
 
 
 class SiameseMetricLearner:
@@ -41,23 +42,26 @@ class SiameseMetricLearner:
             )
 
         early_stopping_callback = EarlyStopping(
-            monitor="loss", #"val_loss",
-            patience=10,
+            monitor="val_loss", #"val_loss","loss"
+            patience=PATIENCE,
             verbose=1,
             mode='min',
             min_delta=1e-4,
             restore_best_weights=True,
         )
-        history = self.learner.fit_generator(train_generator,
-                                             # validation_data=test_generator,
-                                             # validation_steps=15,
-                                             epochs=epochs,
-                                             verbose=1,
-                                             workers=self.n_jobs,
-                                             use_multiprocessing=True,
-                                             steps_per_epoch=STEPS_PER_EPOCH,
-                                             callbacks=[early_stopping_callback]
-                                         )
+        try:
+            history = self.learner.fit_generator(train_generator,
+                                                 validation_data=test_generator,
+                                                 validation_steps=30,
+                                                 epochs=epochs,
+                                                 verbose=1,
+                                                 workers=self.n_jobs,
+                                                 use_multiprocessing=True,
+                                                 steps_per_epoch=STEPS_PER_EPOCH,
+                                                 callbacks=[early_stopping_callback]
+                                             )
+        except KeyboardInterrupt:
+            print('FITTING IS STOPPED BY USER! KeyboardInterrupt')
         del self.learner
         del tgen
         return history

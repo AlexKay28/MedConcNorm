@@ -1,6 +1,5 @@
 import numpy as np
-from keras import backend as K
-
+from tensorflow.keras import backend as K
 from src.configs import GENERAL, PREPROCESSING, MODELING
 
 ALPHA = MODELING['siamese_params']['alpha']

@@ -1,19 +1,29 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Convolution2D, MaxPooling1D
+import math
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Convolution2D, MaxPooling1D
+
+from src.configs import GENERAL, PREPROCESSING, MODELING
+
+base_model_output_dim = MODELING['siamese_params']['base_model_output_dim']
+base_model_layers = MODELING['siamese_params']['base_model_layers']
+choosed_dropout = MODELING['siamese_params']['choosed_dropout']
 
 
 def base_model(sent_emb):
+    """
+    Base configuration of model which is implemented
+    as main part of siamese model
+    """
     model = Sequential()
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(256, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(256, activation='relu'))
-    model.add(Dropout(0.2))
+    for iteration in range(base_model_layers):
+        model.add(Dense(base_model_output_dim*4, activation='relu'))
+        model.add(Dropout(choosed_dropout))
+    for iteration in range(math.ceil(base_model_layers/2)):
+        model.add(Dense(base_model_output_dim*2, activation='relu'))
+        model.add(Dropout(choosed_dropout))
     model.add(Flatten())
-    model.add(Dense(128))
+    model.add(Dense(base_model_output_dim))
     return model
 
 

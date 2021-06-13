@@ -65,6 +65,8 @@ class LGBM_model:
         self.model = self.get_best_model_configuration(X, y)
 
     def predict_proba(self, X):
+        if self.metric_learner:
+            X = self.metric_learner.transform(X)
         return self.model.predict_proba(X)
 
     def get_params(self):

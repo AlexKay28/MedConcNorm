@@ -1,5 +1,5 @@
 general:
-  n_jobs: 25
+  n_jobs: 15
   random_seed: 42
 
 preprocessing:
@@ -10,9 +10,9 @@ preprocessing:
     #- gensim
 
   sentence_vectorizer:
-    #- fasttext_facebook #
+    - fasttext_facebook #
     #- bert-base-uncased
-    - endr-bert
+    - endr-bert #
     # - bert-PubMed
     #- bertweet-base
     #- encoder
@@ -27,15 +27,6 @@ preprocessing:
     #- True
     - False
 
-  ft_model_path:
-    - data/external/embeddings/cc.en.300.bin
-    #- data/external/embeddings/BioWordVec_PubMed_MIMICIII_d200.bin
-
-  sentence_vec:
-    #- 50
-    #- 100
-    - 300
-
 modeling:
   metric_learner_name:
     #- NCA
@@ -43,47 +34,79 @@ modeling:
     #- LFDA
     - siamese
   use_metric_learning:
-    #- True
-    - False
+    - True
+    #- False
 
   siamese_params:
+    base_model_output_dim:
+      #- 8
+      #- 16
+      #- 32
+      - 64
+      - 128
+      - 256
+      - 512
+      - 768
+    base_model_layers:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      #- 8
+    choosed_dropout:
+      - 0.1
+      - 0.2
+      - 0.4
     batch_size:
-      #- 64
-      #- 128
+      - 128
       - 256
     lr:
       - 0.001
-      #- 0.0005
+      - 0.01
+      - 0.05
+      - 0.1
     epochs:
+      - 10
+      - 20
       - 30
+      - 40
       - 50
-      #- 70
       #- 100
-      #- 250
-      #- 350
-    steps_per_epoch:
-      - 50
-      #- 35
-      #- 20
+      #- 500
+    patience:
+      #- 5
       #- 10
-      - 70
-      - 140
-      #- 250
-      #- 350
+      #- 20
+      - 50
+      #- 50
+      #- 100
+      #- 200
+
+    steps_per_epoch:
+      #- 50
+      #- 35
+      #- 10
+      #- 70
+      #- 140
+      - 250
+
     alpha:
-      - 0.2
+      #- 0.2
       - 0.6
       - 1.0
       - 1.2
+      - 1.5
 
   distance_type:
     #- euclidean
-    - cosine # ТВОЯ НЕЙРОСЕТЬ metric learning ТРЕНИРУЕТСЯ НА КОСИНУСНОЕ РАССТОЯНИЕ И ЕВКЛИДОВО!!
+    #- cosine # ТВОЯ НЕЙРОСЕТЬ metric learning ТРЕНИРУЕТСЯ НА КОСИНУСНОЕ РАССТОЯНИЕ И ЕВКЛИДОВО!!
     - minkowski #
     - chebyshev
 
   model_name:
     #- SVC
-    #- kNN #
-    - SGD
+    - kNN #
+    #- SGD
     #s- LGBM

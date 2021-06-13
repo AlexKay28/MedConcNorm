@@ -1,6 +1,6 @@
-from keras.models import Model
-from keras.optimizers import Adam
-from keras.layers import Input, Lambda
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Input, Lambda
 
 
 def siamese_model(base_model, sent_emb, triple_loss_function, identity_loss_function, learning_rate=0.001):

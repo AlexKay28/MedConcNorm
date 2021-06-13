@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 100
+N_ITER = 180
 RANDOM_SEED = 32
 
 
@@ -28,18 +28,14 @@ class SGD_model:
     def add_metric_learner(self, metric_learner):
         self.metric_learner = metric_learner
 
-    def get_best_model_configuration(self, X, y, X_test, y_test):
+    def get_best_model_configuration(self, X, y):
         estimator = CalibratedClassifierCV(SGDClassifier())
-        if self.metric_learner:
-            self.metric_learner.fit(X, y, X_test, y_test)
-
         parameters = {
             'base_estimator__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'],
             'base_estimator__penalty': ['l2', 'l1', 'elasticnet'],
             'base_estimator__max_iter': [500, 1000]
             }
-
-        decision = RandomizedSearchCV(estimator=estimator,
+        self.model = RandomizedSearchCV(estimator=estimator,
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
@@ -47,24 +43,23 @@ class SGD_model:
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
-        X = self.metric_learner.transform(X) if self.metric_learner else X
-        decision.fit(X, y)
-        if self.metric_learner:
-            decision = Pipeline([
-                ('metric_learner', self.metric_learner),
-                #('svc', estimator)
-                ('sgd', decision)
-            ])
-            self._best_model_params = decision['sgd'].get_params()
-        else:
-            self._best_model_params = decision.get_params()
-        return decision
+        try:
+            self.model.fit(X, y)
+        except Exception as e:
+            self.model = SGDClassifier()
+            self.model.fit(X, y)
+        self._best_model_params = self.model.best_params_
 
     def fit(self, X, y, X_test, y_test):
         self.classes_ = np.unique(y)
-        self.model = self.get_best_model_configuration(X, y, X_test, y_test)
+        if self.metric_learner:
+            self.metric_learner.fit(X, y, X_test, y_test)
+            X = self.metric_learner.transform(X)
+        self.get_best_model_configuration(X, y)
 
     def predict_proba(self, X):
+        if self.metric_learner:
+            X = self.metric_learner.transform(X)
         return self.model.predict_proba(X)
 
     def get_params(self):

@@ -5,7 +5,7 @@ import pickle
 import torch
 from functools import reduce
 from tqdm import tqdm
-import keras
+#import keras
 from sklearn.feature_extraction.text import TfidfVectorizer
 import tensorflow as tf
 from tensorflow.keras.preprocessing import sequence
@@ -23,11 +23,9 @@ tqdm.pandas()
 tf.executing_eagerly()
 
 N_JOBS = GENERAL['n_jobs']
-VEC_SIZE = PREPROCESSING['sentence_vec']
 FT_EPOCHS = None # DEPRECATED: PREPROCESSING['fasttext_model']['epochs']
 FT_WINDOW = None # DEPRECATED: PREPROCESSING['fasttext_model']['window']
 AGG_TYPE = PREPROCESSING['agg_type']
-ft_model_path = PREPROCESSING['ft_model_path']
 TOKENIZER_NAME = PREPROCESSING['tokenizer_name']
 
 #ft_model_path = 'data/external/embeddings/cc.en.300.bin'
@@ -57,7 +55,7 @@ class SentenceVectorizer:
         data[feat_col+'_vec'] = [[i][0] for i in vectors]
         return data
 
-    def pretrain_ft__model(self, corpus='default', size=VEC_SIZE, epochs=FT_EPOCHS, window=FT_WINDOW):
+    def pretrain_ft__model(self, corpus='default', size=300, epochs=FT_EPOCHS, window=FT_WINDOW):
         model = FastText(size=size, window=window, min_count=1)
         if corpus=='default':
             sentences = common_texts
@@ -72,10 +70,10 @@ class SentenceVectorizer:
             raise KeyError('Unknown corpus name! (Kay)')
         return model
 
-    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None, size=VEC_SIZE,
+    def vectorize_sent_ft(self, data, feat_col='term', text_columns=None,
                                 corpus='default'):
         print('LOADING MODEL')
-        model = FastText.load_fasttext_format(ft_model_path)
+        model = FastText.load_fasttext_format("data/external/embeddings/cc.en.300.bin")
 
         def sent2vec(sent, model=model):
             def aggregate(vecs, agg_type):
@@ -151,9 +149,15 @@ class SentenceVectorizer:
 
         def get_vecors_from_context_TORCH(text, span):
             """ Get sent vec with TOCH model """
-            tokenized_text = tokenizer.tokenize(text)
+            try:
+                tokenized_text = tokenizer.tokenize(text)
+                text_ids = tokenizer.encode(text)
+            except Exception as e:
+                print(text, span, e)
+                tokenized_text = tokenizer.tokenize(span)
+                text_ids = tokenizer.encode(span)
             tokenized_span = tokenizer.tokenize(span)
-            text_ids = tokenizer.encode(text)
+
             # get tokens vecs
             text_ids = torch.tensor(text_ids).unsqueeze(0)
             outputs = model(text_ids)
@@ -191,7 +195,7 @@ class SentenceVectorizer:
     def vectorize_encoder(self, data, feat_col='term', max_seq_len=10):
         with open('models/encoder/tokenizer.pickle', 'rb') as tok:
             tokenizer = pickle.load(tok)
-        encoder = keras.models.load_model('models/encoder/encoder_cadec.h5')
+        #encoder = keras.models.load_model('models/encoder/encoder_cadec.h5')
         tokenized = tokenizer.texts_to_sequences(data[feat_col])
         tokenized = sequence.pad_sequences(tokenized, maxlen=max_seq_len)
         data[feat_col+'_vec'] = tokenizer.texts_to_sequences(data[feat_col])

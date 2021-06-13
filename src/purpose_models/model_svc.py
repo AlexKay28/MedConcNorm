@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 100
+N_ITER = 180
 RANDOM_SEED = 32
 
 
@@ -30,17 +30,13 @@ class SVC_model:
 
     def get_best_model_configuration(self, X, y):
         estimator = CalibratedClassifierCV(SVC(probability=True))
-        if self.metric_learner:
-            self.metric_learner.fit(X, y)
-
         parameters = {
             'base_estimator__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
             'base_estimator__degree': list(range(2, 7)),
             'base_estimator__gamma': ['scale'],
             'base_estimator__probability': [True]
             }
-
-        decision = RandomizedSearchCV(estimator=estimator,
+        self.model = RandomizedSearchCV(estimator=estimator,
                                       param_distributions=parameters,
                                       cv=CV,
                                       n_iter=N_ITER,
@@ -48,24 +44,23 @@ class SVC_model:
                                       verbose=1,
                                       scoring=accuracy_score,
                                       random_state=RANDOM_SEED)
-        X = self.metric_learner.transform(X) if self.metric_learner else X
-        decision.fit(X, y)
-        if self.metric_learner:
-            decision = Pipeline([
-                ('metric_learner', self.metric_learner),
-                #('svc', estimator)
-                ('svc', decision)
-            ])
-            self._best_model_params = decision['svc'].get_params()
-        else:
-            self._best_model_params = decision.get_params()
-        return decision
+        try:
+            self.model.fit(X, y)
+        except Exception as e:
+            self.model = SVC(probability=True)
+            self.model.fit(X, y)
+        self._best_model_params = self.model.best_params_
 
-    def fit(self, X, y):
+    def fit(self, X, y, X_test, y_test):
         self.classes_ = np.unique(y)
-        self.model = self.get_best_model_configuration(X, y)
+        if self.metric_learner:
+            self.metric_learner.fit(X, y, X_test, y_test)
+            X = self.metric_learner.transform(X)
+        self.get_best_model_configuration(X, y)
 
     def predict_proba(self, X):
+        if self.metric_learner:
+            X = self.metric_learner.transform(X)
         return self.model.predict_proba(X)
 
     def get_params(self):
