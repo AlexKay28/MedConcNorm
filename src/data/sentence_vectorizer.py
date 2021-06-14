@@ -18,6 +18,7 @@ from gensim.utils import tokenize
 
 from src.configs import GENERAL, PREPROCESSING
 from src.data.tokenizer import Tokenizer
+from sentence_transformers import SentenceTransformer
 
 tqdm.pandas()
 tf.executing_eagerly()
@@ -34,8 +35,10 @@ TOKENIZER_NAME = PREPROCESSING['tokenizer_name']
 class SentenceVectorizer:
 
     __available_vectorizers = [
-        'fasttext_default_100', 'fasttext_default_300',
-        'fasttext_cadec_100', 'fasttext_cadec_300',
+        'fasttext_default_100',
+        'fasttext_default_300',
+        'fasttext_cadec_100',
+        'fasttext_cadec_300',
         'fasttext_facebook',
         'bert-base-uncased',
         'bert-PubMed',
@@ -214,6 +217,11 @@ class SentenceVectorizer:
         data[feat_col+'_vec'] = vectorizer.transform(lemmatized).todense().tolist()
         return data
 
+    def vectorize_SRoBERTa(self, data, feat_col='term'):
+        model = SentenceTransformer('xlm-roberta-base')
+        sentence_embeddings = model.encode(data[feat_col])
+        data[feat_col+'_vec'] = sentence_embeddings.tolist()
+        return data
 
     def vectorize(self, data, vectorizer_name='fasttext'):
         print(f'Used vectorizer: {vectorizer_name}')
@@ -235,6 +243,8 @@ class SentenceVectorizer:
             data = self.vectorize_tfidf(data)
         elif vectorizer_name=='word2vec':
             data = self.vectorize_sent_w2v(data)
+        elif vectorizer_name=='SRoBERTa':
+            data = self.vectorize_SRoBERTa(data)
         else:
             raise KeyError('Unknown vectorizer!')
         return data

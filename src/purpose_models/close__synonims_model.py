@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,18 +8,38 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from src.features.retrofitting import vectorize_mention, vectorize_concept
 
-def prepare_data(concepts, terms_train, terms_test, use_case='train_codes'):
+vec_model_name = os.environ.get('vec_model_name', 'fasttext')
 
-    print(f"TRAIN COLUMNS: {terms_train.columns}")
-    print(f"TEST COLUMNS: {terms_test.columns}")
+def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case='train_codes'):
+    concepts = pd.read_csv('data/interim/used_codes_big.csv')[['code', 'STR', 'SNMS']]
+    terms_train = pd.read_csv(f'data/interim/{train_corp}/{terms_train_name}')
+    terms_test = pd.read_csv(f'data/interim/{test_corp}/test.csv')
+
+    train_path = f'data/processed/indian_net/train_{train_corp}_{vec_model_name}_{terms_train_name}'
+    test_path = f'data/processed/indian_net/test_{test_corp}_{vec_model_name}_{terms_train_name}'
+    concepts_path = f'data/processed/indian_net/concept_{train_corp}_{use_case}_{terms_train_name}'
 
     print("Prepare train columns")
-    terms_vecs_train = terms_train.progress_apply(lambda row: vectorize_mention(row), axis=1)
-    terms_vecs_train = pd.DataFrame(terms_vecs_train.dropna().values.tolist()).dropna().values
+    if os.path.exists(train_path):
+        print("Load:", train_path)
+        terms_vecs_train = pd.read_csv(train_path)
+    else:
+        print("Create:", train_path)
+        terms_vecs_train = terms_train.progress_apply(lambda row: vectorize_mention(row), axis=1)
+        terms_vecs_train = pd.DataFrame(terms_vecs_train.dropna().values.tolist())
+        terms_vecs_train.to_csv(train_path)
+    terms_vecs_train = terms_vecs_train.dropna().values
 
     print("Prepare test columns")
-    terms_vecs_test = terms_test.progress_apply(lambda row: vectorize_mention(row), axis=1)
-    terms_vecs_test = pd.DataFrame(terms_vecs_test.dropna().values.tolist()).dropna().values
+    if os.path.exists(test_path):
+        print("Load:", test_path)
+        terms_vecs_test = pd.read_csv(test_path)
+    else:
+        print("Create:", test_path)
+        terms_vecs_test = terms_test.progress_apply(lambda row: vectorize_mention(row), axis=1)
+        terms_vecs_test = pd.DataFrame(terms_vecs_test.dropna().values.tolist())
+        terms_vecs_test.to_csv(test_path)
+    terms_vecs_test = terms_vecs_test.dropna().values
 
     if use_case=='train_codes':
         # все из трейна
@@ -34,8 +55,15 @@ def prepare_data(concepts, terms_train, terms_test, use_case='train_codes'):
 
     print("Prepare concept columns")
     codes = concepts['index'].to_numpy()
-    concepts_vecs = concepts.progress_apply(lambda row: vectorize_concept(row), axis=1)
-    concepts_vecs = pd.DataFrame(concepts_vecs.values.tolist()).dropna().values
+    if os.path.exists(concepts_path):
+        print("Load:", concepts_path)
+        concepts_vecs = pd.read_csv(concepts_path)
+    else:
+        print("Create:", concepts_path)
+        concepts_vecs = concepts.progress_apply(lambda row: vectorize_concept(row, retro_iters), axis=1)
+        concepts_vecs = pd.DataFrame(concepts_vecs.values.tolist())
+        concepts_vecs.to_csv(concepts_path)
+    concepts_vecs = concepts_vecs.dropna().values
 
     terms_codes_train = terms_train['code'].apply(
         lambda code: concepts.loc[code]['index'])
@@ -93,7 +121,7 @@ def get_syn_model(n_concepts,
 
     model = tf.keras.Model(inputs=[inputs1, inputs2], outputs=[output])
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss="categorical_crossentropy",
         metrics=[tf.keras.metrics.CategoricalAccuracy(name='cat_acc')],
     )
@@ -129,7 +157,7 @@ def fit_synonimer(train_gen,
                   learning_rate,
                   layer_size,
                   dn_layers=1,
-                  verbose=2,
+                  verbose=1,
                   epochs=80,
                   steps_per_epoch=200,
                   validation_steps=50,
@@ -143,6 +171,7 @@ def fit_synonimer(train_gen,
             restore_best_weights=True,
         )
 
+
     model = get_syn_model(
         n_concepts,
         embedding_size,
@@ -153,7 +182,7 @@ def fit_synonimer(train_gen,
 
     if show_model_info:
         model.summary()
-    history = model.fit_generator(train_gen,
+    history = model.fit(train_gen,
               epochs=epochs,
               verbose=verbose,
               steps_per_epoch=steps_per_epoch,
