@@ -6,6 +6,7 @@ import mlflow
 import mlflow.sklearn
 from argparse import ArgumentParser
 from copy import copy
+from sklearn.model_selection import train_test_split
 
 import logging
 import traceback
@@ -26,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 from src.data.sentence_vectorizer import SentenceVectorizer
 from src.purpose_models.trainer import Trainer
-from src.features.metrics import accuracy_top_K_pobs
+from src.features.metrics import accuracy_top_K_pobs, precision, recall, f1score
 from src.configs import GENERAL, PREPROCESSING, AVAILABLE_CONFIGURATIONS, MODELING
 from src.configs import create_random_configuration, delete_process_configuration_file
 from src.features.novelty_detector import NoveltyDetector
@@ -59,7 +60,7 @@ def log_dict_to_mlflow(dictionary):
         else:
             mlflow.log_param(str(key), value)
 
-def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test, calc_subset):
+def run_pipe(folder, sv, meddra_labels, name_train, corpus_train, name_test, corpus_test, calc_subset):
     """
     Runs pipeline with defined settings and log it
     in MLflow Tracker node
@@ -83,40 +84,47 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
         mlflow.log_param('tokenizer_name', tokenizer_name)
         mlflow.log_param('distance_type', distance_type)
         mlflow.log_param('calc_subset', calc_subset)
+        mlflow.log_param('folder', folder)
 
         try:
             mlflow.log_artifact(f'src/configs/temp/run_config_{RUN_NAME}.yml')
             if calc_subset == 'pure':
-                train_file = f"train_pure_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_pure_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
 
             elif calc_subset == 'augmented_textaugment_wdnt':
-                train_file = f"train_aug_textaugment_wdnt_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_textaugment_wdnt_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_nlpaug_wdnt':
-                train_file = f"train_aug_nlpaug_wdnt_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_nlpaug_wdnt_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_nlpaug_ppdb':
-                train_file = f"train_aug_nlpaug_ppdb_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_nlpaug_ppdb_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
 
             elif calc_subset == 'augmented_textaugment_wdnt_insrt':
-                train_file = f"train_aug_textaugment_wdnt_insrt_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_textaugment_wdnt_insrt_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_textaugment_wdnt_2_repl':
-                train_file = f"train_aug_textaugment_wdnt_2_rpl_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_textaugment_wdnt_2_rpl_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_textaugment_wdnt_3_repl':
-                train_file = f"train_aug_textaugment_wdnt_3_rpl_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_textaugment_wdnt_3_rpl_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'augmented_textaugment_wdnt_insrt_retro':
-                train_file = f"train_aug_textaugment_wdnt_insrt_retro_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_aug_textaugment_wdnt_insrt_retro_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
 
+            elif calc_subset == 'extended':
+                train_file = f"train_concept_ex_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+            elif calc_subset == 'extended_aug_ppdb':
+                train_file = f"train_concept_ex_aug_pbdb_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'concept':
-                train_file = f"train_concept_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_concept_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'concept_retro':
-                train_file = f"train_concept_retro_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_concept_retro_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'all_internal':
-                train_file = f"train_all_internal_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_all_internal_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
             elif calc_subset == 'big':
-                train_file = f"train_big_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+                train_file = f"train_big_{folder}_{name_train}_{VECTORIZER_NAME}_{tokenizer_name}.pkl"
+            else:
+                raise KeyError(f"Such set as {name_train} isnt exists")
 
-            file_path = 'data/processed/' + train_file
+            file_path = 'data/processed/ml_classifier/' + train_file
             print("TRAIN FILE", train_file)
-            if train_file in os.listdir('data/processed'):
+            if train_file in os.listdir('data/processed/ml_classifier'):
                 logging.critical('Use cached train data')
                 print('Use cached train data')
                 train = pd.read_pickle(file_path)
@@ -129,23 +137,13 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 print(train.shape)
                 print(f'Vectorize train by {VECTORIZER_NAME} ', end='.')
                 train = sv.vectorize(train, vectorizer_name=VECTORIZER_NAME)
-                train.to_pickle('data/processed/' +train_file)
-            train = train.dropna()
-            logging.info(f'train shape: {train.shape}')
-            X_train, y_train = train['term_vec'], train['code']
-            X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
-            y_train = y_train.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
-
-            # FIT Novelty Detector
-            if ask_select_novelties:
-                novdet = NoveltyDetector()
-                novdet.fit(X_train)
+                train.to_pickle('data/processed/ml_classifier/' + train_file)
 
             # PREPARE TEST SETS
             mlflow.set_tag("mlflow.note.content","<my_note_here>")
-            test_file = f'data/processed/test_{name_test}_{VECTORIZER_NAME}_{tokenizer_name}.pkl'
+            test_file = f'data/processed/ml_classifier/test_{folder}_{name_test}_{VECTORIZER_NAME}_{tokenizer_name}.pkl'
             print("TEST FILE", test_file)
-            if f"test_{name_test}_{VECTORIZER_NAME}_{tokenizer_name}.pkl" in os.listdir('data/processed'):
+            if f"test_{folder}_{name_test}_{VECTORIZER_NAME}_{tokenizer_name}.pkl" in os.listdir('data/processed/ml_classifier'):
                 logging.critical('Use cached test data')
                 print('Use cached test data')
                 test = pd.read_pickle(test_file)
@@ -156,11 +154,39 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 test = sv.vectorize(test, vectorizer_name=VECTORIZER_NAME)
                 test.to_pickle(test_file)
 
+
+
+            train['SNMS'] = train['SNMS'].apply(lambda x: [] if x is np.nan else x)
+            test['SNMS'] = test['SNMS'].apply(lambda x: [] if x is np.nan else x)
+
+            train = train[train['code'].isin(meddra_labels.keys())]
+            test = test[test['code'].isin(meddra_labels.keys())]
+            print(train.shape)
+            print(test.shape)
+            # train = train.dropna()
+            # test  = test.dropna()
+
+            # labels_codes = labels.unique()
+            # corpus_train['code'] = corpus_train['code'].astype(int)
+            # corpus_test['code'] = corpus_test['code'].astype(int)
+            # corpus_train = corpus_train[corpus_train['code'].isin(labels_codes)]
+            # corpus_test = corpus_test[corpus_test['code'].isin(labels_codes)]
+
+
+            logging.info(f'train shape: {train.shape}')
+            X_train, y_train = train['term_vec'], train['code']
+            X_train = pd.DataFrame([pd.Series(x) for x in X_train]).to_numpy()
+            y_train = y_train.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
             #test = test.dropna()
             logging.info(f'test shape: {test.shape}')
             X_test, y_test = test['term_vec'], test['code']
             X_test = pd.DataFrame([pd.Series(x) for x in X_test]).to_numpy()
             y_test = y_test.progress_apply(lambda x: int(meddra_labels[x])).to_numpy()
+
+            # FIT Novelty Detector
+            if ask_select_novelties:
+                novdet = NoveltyDetector()
+                novdet.fit(X_train)
 
             # FIT MODEL
             logging.critical('fitting model')
@@ -191,6 +217,9 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
                 X_test = np.concatenate(
                     [X_test, X_test_novelties])
 
+            mlflow.log_metric(f"precision", precision(y_test,  y_hat_test))
+            mlflow.log_metric(f"recall", recall(y_test,  y_hat_test))
+            mlflow.log_metric(f"f1", f1score(y_test,  y_hat_test))
             for k in [1, 3, 5]:
                 score_train = accuracy_top_K_pobs(y_train, y_hat_train, classes, k=k)
                 score_test  = accuracy_top_K_pobs(y_test,  y_hat_test,  classes, k=k)
@@ -212,16 +241,14 @@ def run_pipe(sv, meddra_labels, name_train, corpus_train, name_test, corpus_test
             mlflow.log_artifact(log_file)
             mlflow.set_tag("LOG_STATUS", "FAILED RUN")
             mlflow.end_run(status='FAILED')
-        #del trainer
-
 
 def main():
     """
     Set parameters and run pipeline with defined settings
     """
     print('READ LABELS!')
-    labels = pd.read_csv('data/interim/meddra_codes_terms_synonims.csv')
-    labels = labels['CODE']
+    labels = pd.read_csv('data/interim/used_codes_big.csv')
+    labels = labels['code']
     meddra_labels = {v:k for k, v in enumerate(labels.unique())}
 
     # configure mlflow
@@ -241,10 +268,10 @@ def main():
     path = 'data/interim/'
 
     #['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
-    data_sets_train = ['smm4h21']
-
+    data_sets_train = ['smm4h21', 'smm4h17', 'psytar', 'cadec', "cadec_custom"]
+    data_sets_train = ['cadec_custom']
     #['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
-    data_sets_test = ['smm4h21']
+    #data_sets_test = ['smm4h17', 'smm4h21', 'psytar', 'cadec', 'combined']
 
     # data_sets_train = np.random.choice(data_sets_train, size=1)
     # data_sets_test = np.random.choice(data_sets_test, size=1)
@@ -252,56 +279,91 @@ def main():
     #for calc_subset in ['augmented_textaugment_wdnt', 'augmented_nlpaug_wdnt', 'augmented_nlpaug_ppdb']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt', 'augmented_textaugment_wdnt_2_repl', 'augmented_textaugment_wdnt_3_repl']:
     #for calc_subset in ['augmented_textaugment_wdnt_insrt_retro']:
-    calc_subsets = ['pure']
-    for calc_subset in calc_subsets:
-        for name_folder_train in os.listdir(path):
-            if name_folder_train not in data_sets_train:
-                continue
-            # PREPARE TRAIN SETS
-            folder = os.path.join(path, name_folder_train)
+    calc_subsets = [
+        'pure',
+        'extended',
+        #'all_internal',
+        #'big',
+        'concept',
+        #'concept_retro',
+        'extended_aug_ppdb',
+        'augmented_textaugment_wdnt',
+        #'augmented_nlpaug_wdnt',
+        #'augmented_nlpaug_ppdb',
+        #'augmented_textaugment_wdnt_insrt_retro',
+        'augmented_textaugment_wdnt_insrt',
+        #'augmented_textaugment_wdnt_2_repl',
+        #'augmented_textaugment_wdnt_3_repl'
+    ]
 
-            if calc_subset == 'pure':
-                corpus_train = folder + '/train_pure.csv'
-            elif calc_subset == 'augmented_textaugment_wdnt':
-                corpus_train = folder + '/train_aug.csv'
-            elif calc_subset == 'augmented_nlpaug_wdnt':
-                corpus_train = folder + '/train_aug_wdnt.csv'
-            elif calc_subset == 'augmented_nlpaug_ppdb':
-                corpus_train = folder + '/train_aug_ppdb.csv'
 
-            elif calc_subset == 'augmented_textaugment_wdnt_insrt':
-                corpus_train = folder + '/train_textaug_wdnt_insrt.csv'
-            elif calc_subset == 'augmented_textaugment_wdnt_2_repl':
-                corpus_train = folder + '/train_textaug_wdnt_2_repl.csv'
-            elif calc_subset == 'augmented_textaugment_wdnt_3_repl':
-                corpus_train = folder + '/train_textaug_wdnt_3_repl.csv'
-            elif calc_subset == 'augmented_textaugment_wdnt_insrt_retro':
-                corpus_train = folder + '/train_textaug_wdnt_insrt_retro.csv'
+    data_sets_train = np.random.choice(data_sets_train, size=1)
+    data_sets_test = data_sets_train
+    calc_subsets = np.random.choice(calc_subsets, size=1)
 
-            elif calc_subset == 'concept':
-                corpus_train = folder + '/train_concept.csv'
-            elif calc_subset == 'concept_retro':
-                corpus_train = folder + '/train_concept_retro.csv'
-            elif calc_subset == 'all_internal':
-                corpus_train = folder + '/train_all_internal.csv'
-            elif calc_subset == 'big':
-                corpus_train = folder + '/train_big.csv'
+    path_to_orig = 'data/interim/'
 
-            for name_folder_test in os.listdir(path):
-                if name_folder_test not in data_sets_test or \
-                   (name_folder_test!=name_folder_train and name_folder_train != 'combined'):
+    folders = [f"folder_{i}" for i in [1, 2, 3, 4, 5]]
+    #folders = np.random.choice(folders, size=1)
+    #for folder in [f"folder_{i}" for i in [1, 2, 3, 4, 5]]:
+    for folder in folders:
+        for calc_subset in calc_subsets:
+            for name_folder_train in os.listdir(path):
+                if name_folder_train not in data_sets_train:
                     continue
-                # PREPARE TEST SETS
-                folder = os.path.join(path, name_folder_test)
-                corpus_test = folder + '/test.csv'
+                print(folder)
+                # PREPARE TRAIN SETS
+                train_data_folder = os.path.join(path, name_folder_train, folder)
 
-                print(f"TRAIN FOLDER: {name_folder_train} | TEST FOLDER: {name_folder_test}")
-                run_pipe(
-                    sv, meddra_labels,
-                    name_folder_train, corpus_train,
-                    name_folder_test, corpus_test,
-                    calc_subset
-                )
+                if calc_subset == 'pure':
+                    corpus_train = train_data_folder + '/train_pure.csv'
+                elif calc_subset == 'augmented_textaugment_wdnt':
+                    corpus_train = train_data_folder + '/train_aug.csv'
+                elif calc_subset == 'augmented_nlpaug_wdnt':
+                    corpus_train = train_data_folder + '/train_aug_wdnt.csv'
+                elif calc_subset == 'augmented_nlpaug_ppdb':
+                    corpus_train = train_data_folder + '/train_aug_ppdb.csv'
+
+                elif calc_subset == 'augmented_textaugment_wdnt_insrt':
+                    corpus_train = train_data_folder + '/train_textaug_wdnt_insrt.csv'
+                elif calc_subset == 'augmented_textaugment_wdnt_2_repl':
+                    corpus_train = train_data_folder + '/train_textaug_wdnt_2_repl.csv'
+                elif calc_subset == 'augmented_textaugment_wdnt_3_repl':
+                    corpus_train = train_data_folder + '/train_textaug_wdnt_3_repl.csv'
+                elif calc_subset == 'augmented_textaugment_wdnt_insrt_retro':
+                    corpus_train = train_data_folder + '/train_textaug_wdnt_insrt_retro.csv'
+
+                elif calc_subset == 'extended':
+                    corpus_train = train_data_folder + '/train_ex.csv'
+                elif calc_subset == 'extended_aug_ppdb':
+                    corpus_train = train_data_folder + '/train_ex_aug_ppdb.csv'
+                elif calc_subset == 'concept':
+                    corpus_train = train_data_folder + '/train_concept.csv'
+                elif calc_subset == 'concept_retro':
+                    corpus_train = train_data_folder + '/train_concept_retro.csv'
+                elif calc_subset == 'all_internal':
+                    corpus_train = train_data_folder + '/train_all_internal.csv'
+                elif calc_subset == 'big':
+                    corpus_train = train_data_folder + '/train_big.csv'
+
+
+                for name_folder_test in os.listdir(path):
+                    if name_folder_test not in data_sets_test or \
+                       (name_folder_test!=name_folder_train and name_folder_train != 'combined'):
+                        continue
+                    # PREPARE TEST SETS
+                    test_data_folder = os.path.join(path, name_folder_test, folder)
+                    corpus_test = test_data_folder + '/test.csv'
+
+                    print(f"TRAIN FOLDER: {train_data_folder} | TEST FOLDER: {test_data_folder}")
+
+                    run_pipe(
+                        folder,
+                        sv, meddra_labels,
+                        name_folder_train, corpus_train,
+                        name_folder_test, corpus_test,
+                        calc_subset
+                    )
     delete_process_configuration_file()
     print('DONE')
 

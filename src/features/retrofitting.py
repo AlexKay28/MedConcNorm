@@ -18,7 +18,7 @@ elif vec_model_name == 'endr-bert':
     vec_model = BertModel.from_pretrained('cimm-kzn/endr-bert')
 elif vec_model_name == 'SRoBERTa':
     print('loading SRoBERTa')
-    vec_model = SentenceTransformer('xlm-roberta-base')
+    vec_model = SentenceTransformer('cimm-kzn/endr-bert')
 else:
     raise KeyError('Unknown vectorizer model')
 
@@ -86,5 +86,5 @@ def vectorize_concept(row, retro_iters, concept_row='STR', synonim_row='SNMS'):
     synonims = set(eval(row[synonim_row]))
     concept_vec = vectorize_sent_direct(concept)
     lexicons_vecs = [vectorize_sent_direct(syn) for syn in synonims]
-    concept_vec = retrofitting(concept_vec, lexicons_vecs, iters=retro_iters)
+    #concept_vec = retrofitting(concept_vec, lexicons_vecs, iters=retro_iters)
     return concept_vec

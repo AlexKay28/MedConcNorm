@@ -40,6 +40,10 @@ class Trainer:
     def fscore(self, X, y):
         pass
 
+    def predict(self, X):
+        X = np.nan_to_num(X)
+        return self.model.predict(X)
+
     def predict_proba(self, X):
         X = np.nan_to_num(X)
         return self.model.predict_proba(X)

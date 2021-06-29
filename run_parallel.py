@@ -23,7 +23,7 @@ def main():
     file_name = args.file
     # creat runs stack
     commands = []
-    for run in range(150):
+    for run in range(300):
         commands.append([
             f"python3",
             f"{file_name}",

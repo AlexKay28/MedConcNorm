@@ -218,7 +218,7 @@ class SentenceVectorizer:
         return data
 
     def vectorize_SRoBERTa(self, data, feat_col='term'):
-        model = SentenceTransformer('xlm-roberta-base')
+        model = SentenceTransformer('cimm-kzn/endr-bert')
         sentence_embeddings = model.encode(data[feat_col])
         data[feat_col+'_vec'] = sentence_embeddings.tolist()
         return data

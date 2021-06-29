@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 180
+N_ITER = 90
 RANDOM_SEED = 32
 
 
@@ -32,10 +32,10 @@ class kNN_model:
     def get_best_model_configuration(self, X, y):
         estimator = CalibratedClassifierCV(KNeighborsClassifier())
         parameters = {
-            'base_estimator__weights': ['uniform', 'distance'],
-            'base_estimator__n_neighbors': list(range(1, 3)),
-            'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
-            'base_estimator__p': [1, 2, 3, 4]
+            'base_estimator__weights': ['distance'],
+            'base_estimator__n_neighbors': list(range(1, 2)),
+            'base_estimator__algorithm': ['auto', 'ball_tree', 'kd_tree'],
+            'base_estimator__p': [1, 2, 3]
             }
         self.model = RandomizedSearchCV(estimator=estimator,
                                       param_distributions=parameters,

@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 CV = 5
-N_ITER = 180
+N_ITER = 80
 RANDOM_SEED = 32
 
 
@@ -31,7 +31,7 @@ class SGD_model:
     def get_best_model_configuration(self, X, y):
         estimator = CalibratedClassifierCV(SGDClassifier())
         parameters = {
-            'base_estimator__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'],
+            'base_estimator__loss': ['hinge', 'modified_huber', 'squared_hinge'],
             'base_estimator__penalty': ['l2', 'l1', 'elasticnet'],
             'base_estimator__max_iter': [500, 1000]
             }

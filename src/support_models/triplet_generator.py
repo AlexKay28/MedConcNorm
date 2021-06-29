@@ -26,6 +26,13 @@ class TripletGenerator:
             result = pool.starmap(func, iterable_args)
         return result
 
+    @staticmethod
+    def corrected_cosine(x, y, corr):
+        x, y, corr = np.array(x), np.array(y), np.array(corr)
+        corrected_x = x - corr
+        corrected_y = y - corr
+        return distance.cosine(corrected_x, corrected_y)
+
     def choose_pos_x_hard(self, X, y, anchor_x, anchor_y, n_random_objects=N_RANDOM_OBS, distance_type=DISTANCE_TYPE):
         """
         choose the pos label with attention on the most remote examples
@@ -43,21 +50,21 @@ class TripletGenerator:
         y = np.array(y)
         if distance_type == 'euclidean':
             d = self.map_parallel(
-                lambda x, y: distance.euclidean(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.euclidean(x, y)/distance.cosine(x, y),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'cosine':
             d = self.map_parallel(distance.cosine, [(anchor_x, ex) for ex in X])
         elif distance_type == 'minkowski':
             d = self.map_parallel(
-                lambda x, y: distance.minkowski(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.minkowski(x, y)/distance.cosine(x, y),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'chebyshev':
             d = self.map_parallel(
-                lambda x, y: distance.chebyshev(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.chebyshev(x, y)/distance.cosine(x, y),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'cityblock':
             d = self.map_parallel(
-                lambda x, y: distance.cityblock(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.cityblock(x, y)/distance.cosine(x, y),
                 [(anchor_x, ex) for ex in X])
         else:
             raise KeyError('Unknown distance metric!')
@@ -65,13 +72,13 @@ class TripletGenerator:
         pos_x = X[np.argmax(d)]
         return pos_x
 
-    def choose_neg_x_hard(self, X, y, anchor_x, anchor_y, n_random_objects=N_RANDOM_OBS, distance_type=DISTANCE_TYPE):
+    def choose_neg_x_hard(self, X, y, anchor_x, pos_x, anchor_y, n_random_objects=N_RANDOM_OBS, distance_type=DISTANCE_TYPE):
         """
         choose the neg label with attention on the closest exaples
         """
         X = X[y!=anchor_y]
         y = y[y!=anchor_y]
-        
+
         if n_random_objects is not None:
             n_random_objects = n_random_objects if n_random_objects < X.shape[0] else X.shape[0]
         else:
@@ -82,21 +89,21 @@ class TripletGenerator:
         y = np.array(y)
         if distance_type == 'euclidean':
             d = self.map_parallel(
-                lambda x, y: distance.euclidean(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.euclidean(x, y)/self.corrected_cosine(pos_x, y, anchor_x),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'cosine':
             d = self.map_parallel(distance.cosine, [(anchor_x, ex) for ex in X])
         elif distance_type == 'minkowski':
             d = self.map_parallel(
-                lambda x, y: distance.minkowski(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.minkowski(x, y)/self.fixed_cosine(pos_x, y, anchor_x),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'chebyshev':
             d = self.map_parallel(
-                lambda x, y: distance.chebyshev(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.chebyshev(x, y)/self.fixed_cosine(pos_x, y, anchor_x),
                 [(anchor_x, ex) for ex in X])
         elif distance_type == 'cityblock':
             d = self.map_parallel(
-                lambda x, y: distance.cityblock(x, y)*distance.cosine(x, y),
+                lambda x, y: distance.cityblock(x, y)/self.fixed_cosine(pos_x, y, anchor_x),
                 [(anchor_x, ex) for ex in X])
         else:
             raise KeyError('Unknown distance metric!')
@@ -115,7 +122,7 @@ class TripletGenerator:
             pos_x = anchor_x
         else:
             pos_x = self.choose_pos_x_hard(X, y, anchor_x, anchor_y)
-        neg_x = self.choose_neg_x_hard(X, y, anchor_x, anchor_y)
+        neg_x = self.choose_neg_x_hard(X, y, anchor_x, pos_x, anchor_y)
         return anchor_x, pos_x, neg_x
 
     def generate_triplets(self, X, y, batch_size):

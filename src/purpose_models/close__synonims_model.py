@@ -6,18 +6,27 @@ from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
+
 from src.features.retrofitting import vectorize_mention, vectorize_concept
 
 vec_model_name = os.environ.get('vec_model_name', 'fasttext')
 
-def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case='train_codes'):
+def prepare_data(folder, train_corp, test_corp, terms_train_name, retro_iters, use_case='train_codes'):
+    le = preprocessing.LabelEncoder()
     concepts = pd.read_csv('data/interim/used_codes_big.csv')[['code', 'STR', 'SNMS']]
-    terms_train = pd.read_csv(f'data/interim/{train_corp}/{terms_train_name}')
-    terms_test = pd.read_csv(f'data/interim/{test_corp}/test.csv')
+    terms_train = pd.read_csv(f'data/interim/{train_corp}/{folder}/{terms_train_name}')
+    terms_test = pd.read_csv(f'data/interim/{test_corp}/{folder}/test.csv')
 
-    train_path = f'data/processed/indian_net/train_{train_corp}_{vec_model_name}_{terms_train_name}'
-    test_path = f'data/processed/indian_net/test_{test_corp}_{vec_model_name}_{terms_train_name}'
-    concepts_path = f'data/processed/indian_net/concept_{train_corp}_{use_case}_{terms_train_name}'
+    train_path = f'data/processed/indian_net/train_{folder}_{train_corp}_{vec_model_name}_{terms_train_name}'
+    test_path = f'data/processed/indian_net/test_{folder}_{test_corp}_{vec_model_name}_{terms_train_name}'
+    concepts_path = f'data/processed/indian_net/concept_{folder}_{train_corp}_{vec_model_name}_{use_case}_{terms_train_name}'
+
+    print(terms_train.shape, terms_test.shape)
+    terms_train = terms_train[terms_train['code'].isin(concepts['code'])]
+    terms_test = terms_test[terms_test['code'].isin(concepts['code'])]
+    print(terms_train.shape, terms_test.shape)
 
     print("Prepare train columns")
     if os.path.exists(train_path):
@@ -27,7 +36,7 @@ def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case=
         print("Create:", train_path)
         terms_vecs_train = terms_train.progress_apply(lambda row: vectorize_mention(row), axis=1)
         terms_vecs_train = pd.DataFrame(terms_vecs_train.dropna().values.tolist())
-        terms_vecs_train.to_csv(train_path)
+        terms_vecs_train.to_csv(train_path, index=False)
     terms_vecs_train = terms_vecs_train.dropna().values
 
     print("Prepare test columns")
@@ -38,7 +47,7 @@ def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case=
         print("Create:", test_path)
         terms_vecs_test = terms_test.progress_apply(lambda row: vectorize_mention(row), axis=1)
         terms_vecs_test = pd.DataFrame(terms_vecs_test.dropna().values.tolist())
-        terms_vecs_test.to_csv(test_path)
+        terms_vecs_test.to_csv(test_path, index=False)
     terms_vecs_test = terms_vecs_test.dropna().values
 
     if use_case=='train_codes':
@@ -54,7 +63,6 @@ def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case=
         raise KeyError('Unknown use case')
 
     print("Prepare concept columns")
-    codes = concepts['index'].to_numpy()
     if os.path.exists(concepts_path):
         print("Load:", concepts_path)
         concepts_vecs = pd.read_csv(concepts_path)
@@ -62,33 +70,37 @@ def prepare_data(train_corp, test_corp, terms_train_name, retro_iters, use_case=
         print("Create:", concepts_path)
         concepts_vecs = concepts.progress_apply(lambda row: vectorize_concept(row, retro_iters), axis=1)
         concepts_vecs = pd.DataFrame(concepts_vecs.values.tolist())
-        concepts_vecs.to_csv(concepts_path)
+        concepts_vecs.to_csv(concepts_path, index=False)
     concepts_vecs = concepts_vecs.dropna().values
 
+    codes = terms_train['code'].unique()
+    le.fit(codes)
     terms_codes_train = terms_train['code'].apply(
-        lambda code: concepts.loc[code]['index'])
+        lambda code: le.transform([code])[0])
     #OOV CODE
     terms_codes_test = terms_test['code'].apply(
-        lambda code: concepts.loc[code]['index'] if code in concepts.index else len(codes))
+        lambda code: le.transform([code])[0] if code in le.classes_ else len(codes))
 
-    terms_codes_train = tf.keras.utils.to_categorical(
-        terms_codes_train, num_classes=len(codes)+1, dtype='float32'
+    terms_codes_train = terms_codes_train.tolist()
+    terms_codes_test = terms_codes_test.tolist()
+
+    num_classes = len(set(terms_codes_train + terms_codes_test)) + 1
+    terms_codes_train_cat = tf.keras.utils.to_categorical(
+        terms_codes_train, num_classes=num_classes, dtype='float32'
     )
-    terms_codes_test = tf.keras.utils.to_categorical(
-        terms_codes_test, num_classes=len(codes)+1, dtype='float32'
+    terms_codes_test_cat = tf.keras.utils.to_categorical(
+        terms_codes_test, num_classes=num_classes, dtype='float32'
     )
-    set_ = terms_vecs_train, terms_codes_train, terms_vecs_test,  terms_codes_test, concepts_vecs, codes
+    set_ = terms_vecs_train, terms_codes_train_cat, terms_vecs_test,  terms_codes_test_cat, concepts_vecs, codes
     return set_
 
 
-def data_generator(terms_vecs, terms_codes, concepts_vecs, batch_size=50):
+def data_generator(terms_vecs, terms_codes, concepts_vecs, batch_size=64):
     while 1:
-        concepts_vecs_choosed = []
-        index_to_choose = np.random.choice(terms_vecs.shape[0]-batch_size)
-        concepts_vecs_choosed.append(concepts_vecs)
-        terms_vecs_choosed = terms_vecs[index_to_choose:index_to_choose+batch_size]
-        terms_codes_choosed = terms_codes[index_to_choose:index_to_choose+batch_size]
-        concepts_vecs_choosed = np.array(concepts_vecs_choosed, dtype='float32')
+        concepts_vecs_choosed = np.array([concepts_vecs], dtype='float32')
+        index_to_choose = np.random.choice(terms_codes.shape[0], size=batch_size)
+        terms_vecs_choosed = terms_vecs[index_to_choose]
+        terms_codes_choosed = terms_codes[index_to_choose]
         train = [terms_vecs_choosed, concepts_vecs_choosed]
         test = [terms_codes_choosed]
         yield train, test
@@ -132,12 +144,10 @@ def get_data_gens(terms_vecs_train,
                   terms_vecs_test,
                   terms_codes_test,
                   concepts_vecs, batch_size=256):
-
     train_gen = data_generator(
         terms_vecs_train, terms_codes_train, concepts_vecs, batch_size=batch_size)
     test_gen = data_generator(
         terms_vecs_test,  terms_codes_test,  concepts_vecs, batch_size=batch_size)
-
     return train_gen, test_gen
 
 def save_history_plot(history):
@@ -171,7 +181,6 @@ def fit_synonimer(train_gen,
             restore_best_weights=True,
         )
 
-
     model = get_syn_model(
         n_concepts,
         embedding_size,
@@ -188,7 +197,8 @@ def fit_synonimer(train_gen,
               steps_per_epoch=steps_per_epoch,
               validation_data=test_gen,
               validation_steps=validation_steps,
-              callbacks=[early_stopping_callback])
+              callbacks=[early_stopping_callback]
+              )
     plt.tight_layout()
     save_history_plot(history)
     max_train = np.array(history.history['cat_acc']).max()
